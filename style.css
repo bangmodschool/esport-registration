@@ -229,3 +229,81 @@
   .bottom-nav a.active{ color:var(--cyan); }
   .bottom-nav a.active svg{ filter:drop-shadow(0 0 5px rgba(0,229,255,.7)); }
   .bottom-nav a:active{ transform:scale(.94); }
+
+  /* ---------- Thai eyebrow override (Orbitron ไม่มีตัวอักษรไทย) ---------- */
+  .eyebrow.th{ font-family:'Chakra Petch'; font-weight:700; letter-spacing:.04em; }
+
+  /* ---------- Loading spinner (ปุ่มที่กำลังรอผลจากเซิร์ฟเวอร์) ---------- */
+  .spinner{
+    display:inline-block; width:14px; height:14px; margin-right:8px; vertical-align:-2px;
+    border:2px solid rgba(255,255,255,.35); border-top-color:currentColor; border-radius:50%;
+    animation:spin .6s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .btn.is-loading{ box-shadow:0 0 18px rgba(0,229,255,.55); cursor:wait; }
+  .btn-primary.is-loading{ box-shadow:0 0 18px rgba(0,229,255,.75); }
+  .btn-danger.is-loading{ box-shadow:0 0 18px rgba(255,75,106,.6); }
+
+  /* เน้นส่วนที่กำลังทำงานอยู่ (การ์ดทีมที่เปิดขยายอยู่) */
+  .team-card.expanded{ border-color:var(--cyan); box-shadow:0 0 0 1px rgba(0,229,255,.25), 0 0 24px rgba(0,229,255,.12); }
+
+  /* ---------- Modal (bottom-sheet บนมือถือ, กล่องกลางจอบนเดสก์ท็อป) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:1000; background:rgba(2,3,8,.78);
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-box{
+    width:100%; max-width:540px; max-height:88vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line); border-bottom:none;
+    padding:22px 20px calc(22px + var(--safe-b));
+    clip-path:polygon(16px 0,100% 0,100% 100%,0 100%,0 16px);
+    transform:translateY(40px); transition:transform .28s cubic-bezier(.22,.85,.28,1.25);
+    box-shadow:0 -8px 40px rgba(0,0,0,.5);
+  }
+  .modal-overlay.open .modal-box{ transform:translateY(0); }
+  @media (min-width:640px){
+    .modal-overlay{ align-items:center; }
+    .modal-box{
+      border-bottom:1px solid var(--line); padding:24px;
+      clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%);
+      transform:translateY(16px) scale(.98);
+    }
+    .modal-overlay.open .modal-box{ transform:translateY(0) scale(1); }
+  }
+  .modal-box h2{ margin-bottom:4px; }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; }
+
+  /* ---------- ระบบปิดรับสมัคร ---------- */
+  .closed-banner{
+    text-align:center; padding:50px 24px; border:1px dashed var(--line);
+    background:rgba(255,61,129,.05);
+  }
+  .closed-banner .icon{ font-size:34px; margin-bottom:10px; }
+  .closed-banner h2{ color:var(--magenta); font-size:20px; margin-bottom:8px; }
+  .closed-banner p{ color:var(--dim); font-size:14px; }
+
+  .status-pill{
+    display:inline-flex; align-items:center; gap:8px; padding:8px 14px;
+    font-family:'Chakra Petch'; font-weight:600; font-size:13px; border:1px solid var(--line);
+  }
+  .status-pill.on{ color:var(--success); border-color:var(--success); }
+  .status-pill.off{ color:var(--danger); border-color:var(--danger); }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor; }
+
+  /* ---------- Confetti (เอฟเฟกต์ฉลองสมัครสำเร็จ) ---------- */
+  .confetti-piece{
+    position:fixed; top:-12px; z-index:1100; pointer-events:none;
+    width:8px; height:14px; opacity:.9;
+    animation:confettiFall linear forwards;
+  }
+  @keyframes confettiFall{
+    to{ transform:translateY(110vh) rotate(600deg); opacity:0; }
+  }
+  .success-glow{ animation:successPulse 1.4s ease-out; }
+  @keyframes successPulse{
+    0%{ box-shadow:0 0 0 rgba(51,255,176,0); }
+    30%{ box-shadow:0 0 40px rgba(51,255,176,.5); }
+    100%{ box-shadow:0 0 0 rgba(51,255,176,0); }
+  }

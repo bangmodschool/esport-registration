@@ -25,7 +25,7 @@
   </div>
 
   <div class="hero">
-    <div class="eyebrow">// Admin Only</div>
+    <div class="eyebrow th">ADMIN ONLY</div>
     <h1>ระบบจัดการแอดมิน</h1>
     <p>จัดการฐานข้อมูลนักเรียนและรายชื่อทีม เพิ่ม/แก้ไข/ลบได้ทุกกรณี นำเข้า/ส่งออกเป็น Excel</p>
   </div>
@@ -35,12 +35,22 @@
     <div id="loginAlert"></div>
     <div class="field">
       <label>รหัสผ่านแอดมิน</label>
-      <input type="password" id="adminPass" onkeydown="if(event.key==='Enter'){event.preventDefault();doAdminLogin();}">
+      <input type="password" id="adminPass" onkeydown="if(event.key==='Enter'){event.preventDefault();doAdminLogin(event);}">
     </div>
-    <button class="btn btn-primary btn-block" onclick="doAdminLogin()">เข้าสู่ระบบ</button>
+    <button class="btn btn-primary btn-block" onclick="doAdminLogin(event)">เข้าสู่ระบบ</button>
   </div>
 
   <div id="adminArea" class="hide">
+
+    <!-- ============ SYSTEM CONTROL ============ -->
+    <div class="panel">
+      <h2>ควบคุมระบบ</h2>
+      <div class="sub">เปิด/ปิดการรับสมัครทีมใหม่ (หัวหน้าทีมยังจัดการทีมเดิมได้ตามปกติแม้ปิดรับสมัคร)</div>
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <span id="regStatusPill" class="status-pill on"><span class="status-dot"></span><span id="regStatusText">กำลังโหลดสถานะ...</span></span>
+        <button class="btn" id="regToggleBtn" onclick="toggleRegistration(event)">เปลี่ยนสถานะ</button>
+      </div>
+    </div>
 
     <div class="panel">
       <h2>เครื่องมือข้อมูล</h2>
@@ -49,12 +59,12 @@
         <div>
           <label>นำเข้าฐานข้อมูลนักเรียน (.xlsx) — คอลัมน์: เลขที่, รหัสนักเรียน, ชื่อ, นามสกุล, ชั้น</label>
           <input type="file" id="importFile" accept=".xlsx">
-          <button class="btn btn-block" style="margin-top:10px;" onclick="doImport()">นำเข้าไฟล์</button>
+          <button class="btn btn-block" style="margin-top:10px;" onclick="doImport(event)">นำเข้าไฟล์</button>
           <div id="importAlert"></div>
         </div>
         <div>
           <label>ส่งออกรายชื่อผู้สมัครแข่งขันทั้งหมด</label>
-          <button class="btn btn-primary btn-block" onclick="doExport()">ดาวน์โหลด Excel</button>
+          <button class="btn btn-primary btn-block" onclick="doExport(event)">ดาวน์โหลด Excel</button>
           <div id="exportAlert"></div>
         </div>
       </div>
@@ -63,27 +73,14 @@
     <!-- ============ STUDENTS DATABASE MANAGEMENT ============ -->
     <div class="panel">
       <h2>ฐานข้อมูลนักเรียน</h2>
-      <div class="sub">แก้ไข/เพิ่ม/ลบรายชื่อนักเรียนในระบบได้โดยตรง — รหัสนักเรียนห้ามซ้ำกับที่มีอยู่แล้ว บันทึกลง Sheet ทันทีทุกครั้งที่ยืนยัน</div>
+      <div class="sub">ค้นหา/แก้ไข/ลบรายชื่อนักเรียนในระบบได้โดยตรง — รหัสนักเรียนห้ามซ้ำกับที่มีอยู่แล้ว บันทึกลง Sheet ทันทีทุกครั้งที่ยืนยัน</div>
 
       <div class="row2">
-        <input type="text" id="stuSearch" placeholder="ค้นหา ชื่อ/นามสกุล/รหัสนักเรียน/ชั้น" onkeydown="if(event.key==='Enter'){event.preventDefault();stuSearchGo();}">
-        <button class="btn" onclick="stuSearchGo()">ค้นหา</button>
+        <input type="text" id="stuSearch" placeholder="ค้นหา ชื่อ/นามสกุล/รหัสนักเรียน/ชั้น" onkeydown="if(event.key==='Enter'){event.preventDefault();stuSearchGo(event);}">
+        <button class="btn" onclick="stuSearchGo(event)">ค้นหา</button>
       </div>
 
-      <h3 style="font-size:15px; margin:18px 0 10px;">เพิ่มนักเรียนใหม่</h3>
-      <div id="stuAddAlert"></div>
-      <div class="row2">
-        <input type="text" id="stuNewNo" placeholder="เลขที่">
-        <input type="text" id="stuNewId" placeholder="รหัสนักเรียน">
-      </div>
-      <div class="row2" style="margin-top:10px;">
-        <input type="text" id="stuNewFirst" placeholder="ชื่อ">
-        <input type="text" id="stuNewLast" placeholder="นามสกุล">
-      </div>
-      <div class="field" style="margin-top:10px;">
-        <input type="text" id="stuNewClass" placeholder="ชั้น">
-      </div>
-      <button class="btn btn-primary" style="margin-top:10px;" onclick="stuAdd()">เพิ่มนักเรียน</button>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="openAddStudentModal()">+ เพิ่มนักเรียนใหม่</button>
 
       <div id="stuArea" style="margin-top:20px;"><div class="loader">กำลังโหลดข้อมูล</div></div>
       <div id="stuPager" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-top:14px; flex-wrap:wrap;"></div>
@@ -94,8 +91,8 @@
       <h2>รายชื่อทีมที่สมัคร</h2>
       <div class="sub">เรียงตามลำดับการสมัคร คลิกเพื่อดู/แก้ไขสมาชิก</div>
       <div class="row2">
-        <input type="text" id="teamSearch" placeholder="ค้นหา ชื่อทีม/ชื่อสมาชิก/รหัสนักเรียน" onkeydown="if(event.key==='Enter'){event.preventDefault();teamSearchGo();}">
-        <button class="btn" onclick="teamSearchGo()">ค้นหา</button>
+        <input type="text" id="teamSearch" placeholder="ค้นหา ชื่อทีม/ชื่อสมาชิก/รหัสนักเรียน" onkeydown="if(event.key==='Enter'){event.preventDefault();teamSearchGo(event);}">
+        <button class="btn" onclick="teamSearchGo(event)">ค้นหา</button>
       </div>
       <div id="teamsArea" style="margin-top:16px;"><div class="loader">กำลังโหลดข้อมูล</div></div>
       <div id="teamPager" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-top:14px; flex-wrap:wrap;"></div>
@@ -123,26 +120,85 @@
       '<span class="mono" style="font-size:13px;">หน้า '+res.page+' / '+res.totalPages+' (รวม '+res.total+' รายการ)</span>'+
       '<button class="btn btn-sm" '+(res.page>=res.totalPages?'disabled':'')+' onclick="'+gotoFnName+'('+(res.page+1)+')">ถัดไป</button>';
   }
+  function setBtnLoading(btn, loading, label){
+    if(!btn) return;
+    if(loading){
+      if(!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('is-loading');
+      btn.innerHTML = '<span class="spinner"></span>'+(label||'กำลังโหลด...');
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+      btn.innerHTML = label || btn.dataset.originalHtml || btn.innerHTML;
+    }
+  }
+  function openModal(innerHtml){
+    closeModal();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'activeModal';
+    overlay.innerHTML = '<div class="modal-box">'+innerHtml+'</div>';
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) closeModal(); });
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function(){ overlay.classList.add('open'); });
+  }
+  function closeModal(){
+    const el = document.getElementById('activeModal');
+    if(el) el.remove();
+  }
 
   let adminToken = null;
 
-  function doAdminLogin(){
+  function doAdminLogin(evt){
     const pass = document.getElementById('adminPass').value;
     showAlert('loginAlert','');
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังเข้าสู่ระบบ...');
     apiCall('adminLogin', { password: pass }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'เข้าสู่ระบบ');
       if(!res.ok){ showAlert('loginAlert', res.message); return; }
       adminToken = res.token;
       document.getElementById('loginPanel').classList.add('hide');
       document.getElementById('adminArea').classList.remove('hide');
+      loadRegStatus();
       loadStudents();
       loadTeams();
+    });
+  }
+
+  /* ============ SYSTEM CONTROL ============ */
+  let regOpen = true;
+  function loadRegStatus(){
+    apiCall('getRegistrationStatus', {}, 'GET').then(function(res){
+      if(!res.ok) return;
+      regOpen = res.open;
+      renderRegStatus();
+    });
+  }
+  function renderRegStatus(){
+    const pill = document.getElementById('regStatusPill');
+    const text = document.getElementById('regStatusText');
+    pill.classList.toggle('on', regOpen);
+    pill.classList.toggle('off', !regOpen);
+    text.textContent = regOpen ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร';
+    document.getElementById('regToggleBtn').textContent = regOpen ? 'ปิดรับสมัคร' : 'เปิดรับสมัคร';
+  }
+  function toggleRegistration(evt){
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
+    apiCall('adminSetRegistrationStatus', { token: adminToken, open: !regOpen }, 'POST').then(function(res){
+      setBtnLoading(btn, false, '');
+      if(!res.ok){ alert(res.message); renderRegStatus(); return; }
+      regOpen = res.open;
+      renderRegStatus();
     });
   }
 
   /* ============ STUDENTS DATABASE ============ */
   let stuPage = 1, stuSearchTerm = '', stuCache = [];
 
-  function stuSearchGo(){ stuSearchTerm = document.getElementById('stuSearch').value.trim(); stuPage = 1; loadStudents(); }
+  function stuSearchGo(evt){ stuSearchTerm = document.getElementById('stuSearch').value.trim(); stuPage = 1; loadStudents(); }
   function gotoStuPage(p){ stuPage = p; loadStudents(); }
 
   function loadStudents(){
@@ -166,7 +222,7 @@
         '<td>'+esc(s.className)+'</td>'+
         '<td style="white-space:nowrap;">'+
           '<button class="btn btn-sm" onclick="stuEdit(\''+s.studentId+'\')">แก้ไข</button> '+
-          '<button class="btn btn-sm btn-danger" onclick="stuDelete(\''+s.studentId+'\')">ลบ</button>'+
+          '<button class="btn btn-sm btn-danger" onclick="stuDelete(event,\''+s.studentId+'\')">ลบ</button>'+
         '</td>'+
       '</tr>';
     }).join('');
@@ -174,22 +230,43 @@
     renderPager('stuPager', res, 'gotoStuPage');
   }
 
-  function stuAdd(){
-    const no = document.getElementById('stuNewNo').value.trim();
-    const sid = document.getElementById('stuNewId').value.trim();
-    const first = document.getElementById('stuNewFirst').value.trim();
-    const last = document.getElementById('stuNewLast').value.trim();
-    const cls = document.getElementById('stuNewClass').value.trim();
-    showAlert('stuAddAlert','');
-    if(!sid || !first || !last){ showAlert('stuAddAlert','กรุณากรอกรหัสนักเรียน ชื่อ และนามสกุล'); return; }
+  function openAddStudentModal(){
+    openModal(
+      '<h2>เพิ่มนักเรียนใหม่</h2>'+
+      '<div id="addStuAlert"></div>'+
+      '<div class="row2">'+
+        '<div class="field"><label>เลขที่</label><input type="text" id="asNo"></div>'+
+        '<div class="field"><label>รหัสนักเรียน</label><input type="text" id="asId"></div>'+
+      '</div>'+
+      '<div class="row2">'+
+        '<div class="field"><label>ชื่อ</label><input type="text" id="asFirst"></div>'+
+        '<div class="field"><label>นามสกุล</label><input type="text" id="asLast"></div>'+
+      '</div>'+
+      '<div class="field"><label>ชั้น</label><input type="text" id="asClass"></div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" style="flex:1" id="asSaveBtn" onclick="submitAddStudent(event)">เพิ่มนักเรียน</button>'+
+      '</div>'
+    );
+  }
+
+  function submitAddStudent(evt){
+    const no = document.getElementById('asNo').value.trim();
+    const sid = document.getElementById('asId').value.trim();
+    const first = document.getElementById('asFirst').value.trim();
+    const last = document.getElementById('asLast').value.trim();
+    const cls = document.getElementById('asClass').value.trim();
+    document.getElementById('addStuAlert').innerHTML = '';
+    if(!sid || !first || !last){
+      document.getElementById('addStuAlert').innerHTML = '<div class="alert">กรุณากรอกรหัสนักเรียน ชื่อ และนามสกุล</div>';
+      return;
+    }
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังบันทึก...');
     apiCall('adminAddStudent', { token: adminToken, no: no, studentId: sid, firstName: first, lastName: last, className: cls }, 'POST').then(function(res){
-      if(!res.ok){ showAlert('stuAddAlert', res.message); return; }
-      document.getElementById('stuNewNo').value = '';
-      document.getElementById('stuNewId').value = '';
-      document.getElementById('stuNewFirst').value = '';
-      document.getElementById('stuNewLast').value = '';
-      document.getElementById('stuNewClass').value = '';
-      showAlert('stuAddAlert','เพิ่มนักเรียนสำเร็จ', true);
+      setBtnLoading(btn, false, 'เพิ่มนักเรียน');
+      if(!res.ok){ document.getElementById('addStuAlert').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      closeModal();
       stuPage = 1;
       loadStudents();
     });
@@ -198,21 +275,47 @@
   function stuEdit(sid){
     const s = stuCache.find(x=>x.studentId===sid);
     if(!s) return;
-    const no = prompt('เลขที่', s.no); if(no===null) return;
-    const newSid = prompt('รหัสนักเรียน', s.studentId); if(newSid===null) return;
-    const first = prompt('ชื่อ', s.firstName); if(first===null) return;
-    const last = prompt('นามสกุล', s.lastName); if(last===null) return;
-    const cls = prompt('ชั้น', s.className); if(cls===null) return;
-    apiCall('adminUpdateStudent', { token: adminToken, studentId: sid, fields: { no: no, studentId: newSid, firstName: first, lastName: last, className: cls } }, 'POST').then(function(res){
-      if(!res.ok){ alert(res.message); return; }
+    openModal(
+      '<h2>แก้ไขข้อมูลนักเรียน</h2>'+
+      '<div id="editStuAlert"></div>'+
+      '<div class="row2">'+
+        '<div class="field"><label>เลขที่</label><input type="text" id="esNo" value="'+esc(s.no)+'"></div>'+
+        '<div class="field"><label>รหัสนักเรียน</label><input type="text" id="esId" value="'+esc(s.studentId)+'"></div>'+
+      '</div>'+
+      '<div class="row2">'+
+        '<div class="field"><label>ชื่อ</label><input type="text" id="esFirst" value="'+esc(s.firstName)+'"></div>'+
+        '<div class="field"><label>นามสกุล</label><input type="text" id="esLast" value="'+esc(s.lastName)+'"></div>'+
+      '</div>'+
+      '<div class="field"><label>ชั้น</label><input type="text" id="esClass" value="'+esc(s.className)+'"></div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" style="flex:1" id="esSaveBtn" onclick="saveEditStudent(event,\''+sid+'\')">บันทึก</button>'+
+      '</div>'
+    );
+  }
+
+  function saveEditStudent(evt, sid){
+    const no = document.getElementById('esNo').value.trim();
+    const newId = document.getElementById('esId').value.trim();
+    const first = document.getElementById('esFirst').value.trim();
+    const last = document.getElementById('esLast').value.trim();
+    const cls = document.getElementById('esClass').value.trim();
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังบันทึก...');
+    apiCall('adminUpdateStudent', { token: adminToken, studentId: sid, fields: { no: no, studentId: newId, firstName: first, lastName: last, className: cls } }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'บันทึก');
+      if(!res.ok){ document.getElementById('editStuAlert').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      closeModal();
       loadStudents();
     });
   }
 
-  function stuDelete(sid){
+  function stuDelete(evt, sid){
     if(!confirm('ยืนยันลบนักเรียนรหัส '+sid+' ออกจากฐานข้อมูล?')) return;
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
     apiCall('adminDeleteStudent', { token: adminToken, studentId: sid }, 'POST').then(function(res){
-      if(!res.ok){ alert(res.message); return; }
+      if(!res.ok){ setBtnLoading(btn, false, 'ลบ'); alert(res.message); return; }
       loadStudents();
     });
   }
@@ -220,7 +323,7 @@
   /* ============ TEAMS ============ */
   let teamPage = 1, teamSearchTerm = '', teamsCache = [];
 
-  function teamSearchGo(){ teamSearchTerm = document.getElementById('teamSearch').value.trim(); teamPage = 1; loadTeams(); }
+  function teamSearchGo(evt){ teamSearchTerm = document.getElementById('teamSearch').value.trim(); teamPage = 1; loadTeams(); }
   function gotoTeamPage(p){ teamPage = p; loadTeams(); }
 
   function loadTeams(){
@@ -242,6 +345,7 @@
         const statusBadge = m.status==='ตัวจริง' ? '<span class="badge">ตัวจริง</span>' : '<span class="badge member">สำรอง</span>';
         return '<tr>'+
           '<td>'+m.position+'</td>'+
+          '<td class="mono">'+esc(m.studentId)+'</td>'+
           '<td>'+esc(m.firstName)+' '+esc(m.lastName)+'</td>'+
           '<td>'+esc(m.className)+'</td>'+
           '<td>'+esc(m.phone)+'</td>'+
@@ -250,21 +354,21 @@
           '<td>'+statusBadge+'</td>'+
           '<td style="white-space:nowrap;">'+
             '<button class="btn btn-sm" onclick="editMember(\''+m.studentId+'\')">แก้ไข</button> '+
-            '<button class="btn btn-sm btn-danger" onclick="deleteMember(\''+m.studentId+'\',\''+esc(t.teamName)+'\')">ลบ</button>'+
+            '<button class="btn btn-sm btn-danger" onclick="deleteMember(event,\''+m.studentId+'\',\''+esc(t.teamName)+'\')">ลบ</button>'+
           '</td>'+
         '</tr>';
       }).join('');
-      return '<div class="team-card">'+
+      return '<div class="team-card" id="teamCard'+idx+'">'+
         '<div class="head" onclick="toggleTeam('+idx+')">'+
           '<div><div class="entry">ENTRY #'+String(t.entryNo).padStart(3,'0')+'</div>'+
           '<div class="tname">'+esc(t.teamName)+'</div></div>'+
           '<div style="text-align:right;">'+
             '<div class="time">'+esc(t.timestamp)+'</div>'+
-            '<button class="btn btn-sm btn-danger" style="margin-top:6px;" onclick="event.stopPropagation();deleteTeam(\''+t.teamId+'\',\''+esc(t.teamName)+'\')">ลบทั้งทีม</button>'+
+            '<button class="btn btn-sm btn-danger" style="margin-top:6px;" onclick="event.stopPropagation();deleteTeam(event,\''+t.teamId+'\',\''+esc(t.teamName)+'\')">ลบทั้งทีม</button>'+
           '</div>'+
         '</div>'+
         '<div id="teamBody'+idx+'" class="hide">'+
-          '<div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>เบอร์โทร</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+          '<div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>#</th><th>รหัสนักเรียน</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>เบอร์โทร</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
           '<div style="padding:16px 18px;">'+
             '<div class="sub" style="margin-bottom:8px;">เพิ่มสมาชิกเข้าทีมนี้ ('+t.members.length+'/5 คน)</div>'+
             (t.members.length>=5 ? '<div class="muted">ทีมนี้เต็มจำนวนแล้ว (5 คน)</div>' :
@@ -273,61 +377,107 @@
               '<input type="tel" placeholder="เบอร์โทรศัพท์" id="addPhone_'+idx+'">'+
             '</div>'+
             '<input type="text" placeholder="ชื่อตัวละครในเกม" id="addGame_'+idx+'" style="margin-top:10px;">'+
-            '<button class="btn btn-sm" style="margin-top:8px;" onclick="addMemberToTeam(\''+t.teamId+'\',\''+esc(t.teamName)+'\','+idx+')">เพิ่มสมาชิก</button>')+
+            '<button class="btn btn-sm" style="margin-top:8px;" onclick="addMemberToTeam(event,\''+t.teamId+'\',\''+esc(t.teamName)+'\','+idx+')">เพิ่มสมาชิก</button>')+
           '</div>'+
         '</div>'+
       '</div>';
     }).join('');
   }
 
-  function toggleTeam(idx){ document.getElementById('teamBody'+idx).classList.toggle('hide'); }
+  function toggleTeam(idx){
+    document.getElementById('teamBody'+idx).classList.toggle('hide');
+    document.getElementById('teamCard'+idx).classList.toggle('expanded');
+  }
 
   function editMember(sid){
     const m = teamsCache.flatMap(t=>t.members).find(x=>x.studentId===sid);
     if(!m) return;
-    const firstName = prompt('ชื่อ', m.firstName); if(firstName===null) return;
-    const lastName = prompt('นามสกุล', m.lastName); if(lastName===null) return;
-    const className = prompt('ชั้น', m.className); if(className===null) return;
-    const phone = prompt('เบอร์โทรศัพท์', m.phone); if(phone===null) return;
-    const gameName = prompt('ชื่อตัวละครในเกม', m.gameName || ''); if(gameName===null) return;
-    const role = confirm('ตั้งเป็นหัวหน้าทีม? (ตกลง = หัวหน้าทีม, ยกเลิก = สมาชิก)') ? 'หัวหน้าทีม' : 'สมาชิก';
-    apiCall('adminUpdateMember', { token: adminToken, studentId: sid, fields: { firstName: firstName, lastName: lastName, className: className, phone: phone, gameName: gameName, role: role } }, 'POST').then(function(res){
-      if(!res.ok){ alert(res.message); return; }
+    openModal(
+      '<h2>แก้ไขข้อมูลสมาชิก</h2>'+
+      '<div class="sub">รหัสนักเรียน: <span class="mono">'+esc(m.studentId)+'</span> (แก้ไขไม่ได้)</div>'+
+      '<div id="editMemberAlert"></div>'+
+      '<div class="field"><label>ชื่อทีม</label><input type="text" id="emTeamName" value="'+esc(m.teamName||'')+'"></div>'+
+      '<div class="row2">'+
+        '<div class="field"><label>ชื่อ</label><input type="text" id="emFirst" value="'+esc(m.firstName)+'"></div>'+
+        '<div class="field"><label>นามสกุล</label><input type="text" id="emLast" value="'+esc(m.lastName)+'"></div>'+
+      '</div>'+
+      '<div class="row2">'+
+        '<div class="field"><label>ชั้น</label><input type="text" id="emClass" value="'+esc(m.className)+'"></div>'+
+        '<div class="field"><label>เบอร์โทรศัพท์</label><input type="tel" id="emPhone" value="'+esc(m.phone)+'"></div>'+
+      '</div>'+
+      '<div class="field"><label>ชื่อตัวละครในเกม</label><input type="text" id="emGame" value="'+esc(m.gameName||'')+'"></div>'+
+      '<div class="field"><label>ตำแหน่ง</label><select id="emRole">'+
+        '<option value="สมาชิก" '+(m.role==='สมาชิก'?'selected':'')+'>สมาชิก</option>'+
+        '<option value="หัวหน้าทีม" '+(m.role==='หัวหน้าทีม'?'selected':'')+'>หัวหน้าทีม</option>'+
+      '</select></div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn" onclick="closeModal()">ยกเลิก</button>'+
+        '<button class="btn btn-primary" style="flex:1" id="emSaveBtn" onclick="saveEditMember(event,\''+sid+'\')">บันทึก</button>'+
+      '</div>'
+    );
+  }
+
+  function saveEditMember(evt, sid){
+    const fields = {
+      teamName: document.getElementById('emTeamName').value.trim(),
+      firstName: document.getElementById('emFirst').value.trim(),
+      lastName: document.getElementById('emLast').value.trim(),
+      className: document.getElementById('emClass').value.trim(),
+      phone: document.getElementById('emPhone').value.trim(),
+      gameName: document.getElementById('emGame').value.trim(),
+      role: document.getElementById('emRole').value
+    };
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังบันทึก...');
+    apiCall('adminUpdateMember', { token: adminToken, studentId: sid, fields: fields }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'บันทึก');
+      if(!res.ok){ document.getElementById('editMemberAlert').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      closeModal();
       loadTeams();
     });
   }
 
-  function deleteMember(sid, teamName){
+  function deleteMember(evt, sid, teamName){
     if(!confirm('ยืนยันลบสมาชิกนี้ออกจากทีม "'+teamName+'"?')) return;
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
     apiCall('adminDeleteMember', { token: adminToken, studentId: sid }, 'POST').then(function(res){
-      if(!res.ok){ alert(res.message); return; }
+      if(!res.ok){ setBtnLoading(btn, false, 'ลบ'); alert(res.message); return; }
       loadTeams();
     });
   }
 
-  function deleteTeam(teamId, teamName){
+  function deleteTeam(evt, teamId, teamName){
     if(!confirm('ยืนยันลบทีม "'+teamName+'" ทั้งทีม? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
     apiCall('adminDeleteTeam', { token: adminToken, teamId: teamId }, 'POST').then(function(res){
-      if(!res.ok){ alert(res.message); return; }
+      if(!res.ok){ setBtnLoading(btn, false, 'ลบทั้งทีม'); alert(res.message); return; }
       loadTeams();
     });
   }
 
-  function addMemberToTeam(teamId, teamName, idx){
+  function addMemberToTeam(evt, teamId, teamName, idx){
     const sid = document.getElementById('addSid_'+idx).value.trim();
     const phone = document.getElementById('addPhone_'+idx).value.trim();
     const gameName = document.getElementById('addGame_'+idx).value.trim();
     if(!sid || !phone || !gameName){ alert('กรุณากรอกรหัสนักเรียน เบอร์โทรศัพท์ และชื่อตัวละครในเกมให้ครบ'); return; }
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังเพิ่ม...');
     apiCall('adminAddMember', { token: adminToken, teamId: teamId, teamName: teamName, studentId: sid, phone: phone, gameName: gameName, role: 'สมาชิก' }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'เพิ่มสมาชิก');
       if(!res.ok){ alert(res.message); return; }
       loadTeams();
     });
   }
 
   /* ------- Export ------- */
-  function doExport(){
+  function doExport(evt){
     showAlert('exportAlert','กำลังสร้างไฟล์...', true);
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังสร้างไฟล์...');
     apiCall('adminExportExcel', { token: adminToken }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'ดาวน์โหลด Excel');
       if(!res.ok){ showAlert('exportAlert', res.message); return; }
       const link = document.createElement('a');
       link.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+res.base64;
@@ -340,15 +490,18 @@
   }
 
   /* ------- Import ------- */
-  function doImport(){
+  function doImport(evt){
     const fileInput = document.getElementById('importFile');
     if(!fileInput.files.length){ showAlert('importAlert','กรุณาเลือกไฟล์ Excel'); return; }
     const file = fileInput.files[0];
     showAlert('importAlert','กำลังนำเข้าไฟล์...', true);
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังนำเข้าไฟล์...');
     const reader = new FileReader();
     reader.onload = function(e){
       const base64 = e.target.result.split(',')[1];
       apiCall('adminImportStudents', { token: adminToken, base64File: base64, fileName: file.name }, 'POST').then(function(res){
+        setBtnLoading(btn, false, 'นำเข้าไฟล์');
         if(!res.ok){ showAlert('importAlert', res.message); return; }
         showAlert('importAlert', 'นำเข้าสำเร็จ: เพิ่มใหม่ '+res.added+' รายการ, อัปเดต '+res.updated+' รายการ', true);
         stuPage = 1;

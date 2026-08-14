@@ -25,9 +25,9 @@
   </div>
 
   <div class="hero">
-    <div class="eyebrow">// Enter the Arena</div>
-    <h1>รวมทีม ลงสนาม<br>ชิงแชมป์ E-SPORT</h1>
-    <p>สร้างทีม เพิ่มสมาชิกด้วยรหัสนักเรียน ระบบจะดึงชื่อ-นามสกุล-ชั้นให้อัตโนมัติ กรอกเบอร์โทรศัพท์และชื่อตัวละครในเกมให้ครบทุกคน แล้วยืนยันการสมัครได้ทันที</p>
+    <div class="eyebrow th">โรงเรียนบางมดวิทยา "สีสุกหวาดจวนอุปถัมภ์"</div>
+    <h1>Garena Free Fire</h1>
+    <p>Battle in Style : ขอเชิญชวนผู้เล่นระดับแนวหน้าและทีมอีสปอร์ตทุกท่านเข้าร่วมการแข่งขัน Free Fire Tournament ประจำปี 2026 เพื่อชิงความเป็นหนึ่งและเงินรางวัลรวมมูลค่า 5,000 บาท สมรภูมินี้เปิดรับสมัครผู้กล้าที่มั่นใจในฝีมือและการทำงานเป็นทีม มาร่วมแสดงศักยภาพและคว้าชัยชนะสูงสุดในรูปแบบ Battle Royale เพื่อประกาศศักดาความเป็นแชมป์</p>
   </div>
 
   <div class="tabs">
@@ -38,6 +38,13 @@
   <!-- ============ TAB: NEW TEAM ============ -->
   <div id="tabNew">
 
+    <div id="closedBanner" class="panel closed-banner hide">
+      <div class="icon">🔒</div>
+      <h2>ขณะนี้ระบบปิดรับสมัคร</h2>
+      <p>กรุณาติดตามประกาศเปิดรับสมัครรอบถัดไปจากทางโรงเรียน</p>
+    </div>
+
+    <div id="newTeamFlow">
     <div class="steps">
       <div class="step on" id="stepInd1">1. ตั้งชื่อทีม</div>
       <div class="step" id="stepInd2">2. เพิ่มสมาชิก</div>
@@ -103,6 +110,7 @@
       <h2 style="color:var(--success)">✓ สมัครสำเร็จ!</h2>
       <div id="successBody"></div>
     </div>
+    </div><!-- /newTeamFlow -->
 
   </div>
 
@@ -123,7 +131,7 @@
           <input type="tel" id="loginPhone">
         </div>
       </div>
-      <button class="btn btn-primary btn-block" onclick="doTeamLogin()">เข้าสู่ระบบ</button>
+      <button class="btn btn-primary btn-block" onclick="doTeamLogin(event)">เข้าสู่ระบบ</button>
     </div>
 
     <div class="panel hide" id="managePanel">
@@ -135,7 +143,7 @@
         <label>เปลี่ยนชื่อทีม</label>
         <div style="display:flex; gap:10px;">
           <input type="text" id="mgTeamNameInput" style="flex:1">
-          <button class="btn btn-sm" onclick="mgRenameTeam()">บันทึก</button>
+          <button class="btn btn-sm" onclick="mgRenameTeam(event)">บันทึก</button>
         </div>
       </div>
 
@@ -159,7 +167,7 @@
           <label>ชื่อตัวละครในเกม</label>
           <input type="text" id="mgNewGameName">
         </div>
-        <button class="btn btn-block" onclick="mgAddMember()">เพิ่มสมาชิก</button>
+        <button class="btn btn-block" onclick="mgAddMember(event)">เพิ่มสมาชิก</button>
       </div>
     </div>
 
@@ -173,6 +181,51 @@
 <script src="inapp-warning.js"></script>
 <script src="bottom-nav.js"></script>
 <script>
+  /* ------------- SHARED UI HELPERS ------------- */
+  function setBtnLoading(btn, loading, label){
+    if(!btn) return;
+    if(loading){
+      if(!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('is-loading');
+      btn.innerHTML = '<span class="spinner"></span>'+(label||'กำลังโหลด...');
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+      btn.innerHTML = label || btn.dataset.originalHtml || btn.innerHTML;
+    }
+  }
+
+  function openModal(innerHtml){
+    closeModal();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'activeModal';
+    overlay.innerHTML = '<div class="modal-box">'+innerHtml+'</div>';
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) closeModal(); });
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function(){ overlay.classList.add('open'); });
+  }
+  function closeModal(){
+    const el = document.getElementById('activeModal');
+    if(el) el.remove();
+  }
+
+  function launchConfetti(){
+    const colors = ['#00e5ff','#ff3d81','#ffc93c','#33ffb0'];
+    for(let i=0;i<60;i++){
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = (Math.random()*100)+'vw';
+      el.style.background = colors[i % colors.length];
+      el.style.animationDuration = (2 + Math.random()*1.5)+'s';
+      el.style.animationDelay = (Math.random()*0.4)+'s';
+      el.style.transform = 'rotate('+(Math.random()*360)+'deg)';
+      document.body.appendChild(el);
+      setTimeout(function(){ el.remove(); }, 4000);
+    }
+  }
+
   /* ------------- TAB SWITCH ------------- */
   function showTab(t){
     document.getElementById('tabNew').classList.toggle('hide', t!=='new');
@@ -180,6 +233,14 @@
     document.getElementById('tabNewBtn').classList.toggle('active', t==='new');
     document.getElementById('tabManageBtn').classList.toggle('active', t==='manage');
   }
+
+  /* ------------- REGISTRATION OPEN/CLOSED CHECK ------------- */
+  apiCall('getRegistrationStatus', {}, 'GET').then(function(res){
+    if(res && res.ok && res.open === false){
+      document.getElementById('newTeamFlow').classList.add('hide');
+      document.getElementById('closedBanner').classList.remove('hide');
+    }
+  });
 
   /* ------------- NEW TEAM FLOW STATE ------------- */
   const TEAM_SIZE = 5;
@@ -208,9 +269,9 @@
     const v = document.getElementById('teamNameInput').value.trim();
     if(!v){ showAlert('teamNameAlert','กรุณาตั้งชื่อทีม'); return; }
     const btn = evt.target;
-    btn.disabled = true; btn.textContent = 'กำลังตรวจสอบชื่อทีม...';
+    setBtnLoading(btn, true, 'กำลังตรวจสอบชื่อทีม...');
     apiCall('checkTeamNameAvailable', { name: v }, 'GET').then(function(res){
-      btn.disabled = false; btn.textContent = 'ถัดไป: เพิ่มสมาชิก';
+      setBtnLoading(btn, false, 'ถัดไป: เพิ่มสมาชิก');
       if(!res.ok){ showAlert('teamNameAlert', res.message); return; }
       showAlert('teamNameAlert','');
       teamName = v;
@@ -236,9 +297,9 @@
     if(!sid){ showAlert('addAlert','กรุณากรอกรหัสนักเรียน'); return; }
     if(members.some(m=>m.studentId===sid)){ showAlert('addAlert','รหัสนี้อยู่ในทีมนี้แล้ว'); return; }
     const btn = document.getElementById('addBtn');
-    btn.disabled = true; btn.textContent = 'กำลังค้นหา...';
+    setBtnLoading(btn, true, 'กำลังค้นหา...');
     apiCall('lookupStudent', { studentId: sid }, 'GET').then(function(res){
-      btn.disabled = false; btn.textContent = 'แอด (ค้นหา)';
+      setBtnLoading(btn, false, 'แอด (ค้นหา)');
       if(!res.ok){ showAlert('addAlert', res.message); return; }
       pendingStudent = res.student;
       const isLeader = members.length===0;
@@ -325,20 +386,23 @@
 
   function doSubmit(){
     const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    setBtnLoading(btn, true, 'กำลังบันทึก...');
     showAlert('submitAlert','');
     apiCall('submitRegistration', { teamName: teamName, members: members }, 'POST').then(function(res){
-      btn.disabled = false; btn.textContent = 'ยืนยันสมัครทีม';
+      setBtnLoading(btn, false, 'ยืนยันสมัครทีม');
       if(!res.ok){ showAlert('submitAlert', res.message); return; }
       document.getElementById('step3').classList.add('hide');
       setStepInd(3);
       document.getElementById('successBody').innerHTML =
         '<div class="roster-item leader"><div class="info">'+
-        '<div class="name">ทีม '+esc(res.teamName)+'</div>'+
-        '<div class="meta">สมัครสำเร็จเมื่อ '+esc(res.timestamp)+'</div></div></div>'+
+        '<div class="name">🏆 ทีม '+esc(res.teamName)+' สมัครสำเร็จ</div>'+
+        '<div class="meta">รอประกาศรายชื่ออย่างเป็นทางการอีกครั้ง • สมัครเมื่อ '+esc(res.timestamp)+'</div></div></div>'+
         '<p class="muted" style="margin-top:14px;">หัวหน้าทีมสามารถเข้าไปแก้ไขสมาชิกทีมได้ที่แท็บ <b>"จัดการทีม (หัวหน้าทีม)"</b> โดยใช้รหัสนักเรียนและเบอร์โทรศัพท์ของหัวหน้าทีม</p>'+
         '<a href="view.html" class="btn btn-primary" style="display:inline-block;margin-top:12px;text-decoration:none;">ดูผลการสมัครทั้งหมด</a>';
-      document.getElementById('stepSuccess').classList.remove('hide');
+      const successPanel = document.getElementById('stepSuccess');
+      successPanel.classList.remove('hide');
+      successPanel.classList.add('success-glow');
+      launchConfetti();
     });
   }
 
@@ -347,12 +411,15 @@
   /* ------------- MANAGE TEAM (LEADER) ------------- */
   let mgTeamId = null, mgToken = null;
 
-  function doTeamLogin(){
+  function doTeamLogin(evt){
     const sid = document.getElementById('loginId').value.trim();
     const phone = document.getElementById('loginPhone').value.trim();
     showAlert('loginAlert','');
     if(!sid || !phone){ showAlert('loginAlert','กรุณากรอกรหัสนักเรียนและเบอร์โทรศัพท์'); return; }
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังเข้าสู่ระบบ...');
     apiCall('teamLogin', { studentId: sid, phone: phone }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'เข้าสู่ระบบ');
       if(!res.ok){ showAlert('loginAlert', res.message); return; }
       mgTeamId = res.teamId; mgToken = res.token;
       document.getElementById('loginPanel').classList.add('hide');
@@ -380,49 +447,59 @@
         '</div>'+
         '<div class="badge '+(isLeader?'':'member')+'">'+(isLeader?'หัวหน้าทีม':'สมาชิก')+'</div>'+
         '<div style="display:flex; flex-direction:column; gap:6px;">'+
-          '<button class="btn btn-sm" onclick="mgUpdateContact(\''+m.studentId+'\')">บันทึก</button>'+
-          (isLeader?'':'<button class="btn btn-sm btn-danger" onclick="mgRemoveMember(\''+m.studentId+'\')">ลบออก</button>')+
+          '<button class="btn btn-sm" onclick="mgUpdateContact(event,\''+m.studentId+'\')">บันทึก</button>'+
+          (isLeader?'':'<button class="btn btn-sm btn-danger" onclick="mgRemoveMember(event,\''+m.studentId+'\')">ลบออก</button>')+
         '</div>'+
       '</div>';
     }).join('');
   }
 
-  function mgRenameTeam(){
+  function mgRenameTeam(evt){
     const v = document.getElementById('mgTeamNameInput').value.trim();
     if(!v) return;
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
     apiCall('teamUpdateTeamName', { teamId: mgTeamId, token: mgToken, newName: v }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'บันทึก');
       if(!res.ok){ showAlert('mgAlert', res.message); return; }
       document.getElementById('mgTeamName').textContent = res.teamName;
       showAlert('mgAlert','บันทึกชื่อทีมแล้ว', true);
     });
   }
 
-  function mgUpdateContact(sid){
+  function mgUpdateContact(evt, sid){
     const phone = document.getElementById('phone_'+sid).value.trim();
     const gameName = document.getElementById('game_'+sid).value.trim();
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
     apiCall('teamUpdateMemberContact', { teamId: mgTeamId, token: mgToken, studentId: sid, phone: phone, gameName: gameName }, 'POST').then(function(res){
-      if(!res.ok){ showAlert('mgAlert', res.message); return; }
+      if(!res.ok){ setBtnLoading(btn, false, 'บันทึก'); showAlert('mgAlert', res.message); return; }
       if(res.token) mgToken = res.token;
       showAlert('mgAlert','บันทึกข้อมูลแล้ว', true);
       renderMgRoster(res.members);
     });
   }
 
-  function mgRemoveMember(sid){
+  function mgRemoveMember(evt, sid){
     if(!confirm('ยืนยันลบสมาชิกนี้ออกจากทีม?')) return;
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
     apiCall('teamRemoveMember', { teamId: mgTeamId, token: mgToken, studentId: sid }, 'POST').then(function(res){
-      if(!res.ok){ showAlert('mgAlert', res.message); return; }
+      if(!res.ok){ setBtnLoading(btn, false, 'ลบออก'); showAlert('mgAlert', res.message); return; }
       renderMgRoster(res.members);
     });
   }
 
-  function mgAddMember(){
+  function mgAddMember(evt){
     const sid = document.getElementById('mgNewId').value.trim();
     const phone = document.getElementById('mgNewPhone').value.trim();
     const gameName = document.getElementById('mgNewGameName').value.trim();
     showAlert('mgAddAlert','');
     if(!sid || !phone || !gameName){ showAlert('mgAddAlert','กรุณากรอกรหัสนักเรียน เบอร์โทรศัพท์ และชื่อตัวละครในเกมให้ครบ'); return; }
+    const btn = evt.target;
+    setBtnLoading(btn, true, 'กำลังเพิ่ม...');
     apiCall('teamAddMember', { teamId: mgTeamId, token: mgToken, studentId: sid, phone: phone, gameName: gameName }, 'POST').then(function(res){
+      setBtnLoading(btn, false, 'เพิ่มสมาชิก');
       if(!res.ok){ showAlert('mgAddAlert', res.message); return; }
       document.getElementById('mgNewId').value='';
       document.getElementById('mgNewPhone').value='';

@@ -57,28 +57,25 @@
     if(!teams.length){ el.innerHTML = '<div class="empty">ยังไม่มีทีมสมัครเข้าแข่งขัน</div>'; return; }
     el.innerHTML = teams.map(function(t, idx){
       const rows = t.members.map(function(m){
-        const statusBadge = m.status==='ตัวจริง' ? '<span class="badge">ตัวจริง</span>' : '<span class="badge member">สำรอง</span>';
         return '<tr><td>'+m.position+'</td><td>'+esc(m.firstName)+' '+esc(m.lastName)+'</td><td>'+esc(m.className)+'</td>'+
-          '<td>'+esc(m.gameName||'')+'</td>'+
-          '<td>'+(m.role==='หัวหน้าทีม' ? 'หัวหน้าทีม' : 'สมาชิก')+'</td>'+
-          '<td>'+statusBadge+'</td></tr>';
+          '<td>'+(m.role==='หัวหน้าทีม' ? 'หัวหน้าทีม' : 'สมาชิก')+'</td></tr>';
       }).join('');
-      return '<div class="team-card">'+
+      return '<div class="team-card" id="card'+idx+'">'+
         '<div class="head" onclick="toggle('+idx+')">'+
           '<div><div class="entry">ENTRY #'+String(t.entryNo).padStart(3,'0')+'</div>'+
           '<div class="tname">'+esc(t.teamName)+'</div></div>'+
           '<div class="time">'+esc(t.timestamp)+'</div>'+
         '</div>'+
         '<div id="body'+idx+'">'+
-          '<div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+          '<div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>ตำแหน่ง</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
         '</div>'+
       '</div>';
     }).join('');
   }
 
   function toggle(idx){
-    const el = document.getElementById('body'+idx);
-    el.classList.toggle('hide');
+    document.getElementById('body'+idx).classList.toggle('hide');
+    document.getElementById('card'+idx).classList.toggle('expanded');
   }
 
   load();
