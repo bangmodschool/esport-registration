@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ผลการสมัครแข่งขัน</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -38,6 +38,7 @@
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script src="inapp-warning.js"></script>
+<script src="bottom-nav.js"></script>
 <script>
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -69,7 +70,7 @@
           '<div class="time">'+esc(t.timestamp)+'</div>'+
         '</div>'+
         '<div id="body'+idx+'">'+
-          '<table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+          '<div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
         '</div>'+
       '</div>';
     }).join('');

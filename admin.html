@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ADMIN PANEL</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -27,7 +27,7 @@
   <div class="hero">
     <div class="eyebrow">// Admin Only</div>
     <h1>ระบบจัดการแอดมิน</h1>
-    <p>จัดการทีม เพิ่ม/แก้ไข/ลบสมาชิกได้ทุกกรณี นำเข้าฐานข้อมูลนักเรียน และส่งออกรายชื่อผู้สมัครเป็น Excel</p>
+    <p>จัดการฐานข้อมูลนักเรียนและรายชื่อทีม เพิ่ม/แก้ไข/ลบได้ทุกกรณี นำเข้า/ส่งออกเป็น Excel</p>
   </div>
 
   <div class="panel" id="loginPanel">
@@ -60,10 +60,45 @@
       </div>
     </div>
 
+    <!-- ============ STUDENTS DATABASE MANAGEMENT ============ -->
+    <div class="panel">
+      <h2>ฐานข้อมูลนักเรียน</h2>
+      <div class="sub">แก้ไข/เพิ่ม/ลบรายชื่อนักเรียนในระบบได้โดยตรง — รหัสนักเรียนห้ามซ้ำกับที่มีอยู่แล้ว บันทึกลง Sheet ทันทีทุกครั้งที่ยืนยัน</div>
+
+      <div class="row2">
+        <input type="text" id="stuSearch" placeholder="ค้นหา ชื่อ/นามสกุล/รหัสนักเรียน/ชั้น" onkeydown="if(event.key==='Enter'){event.preventDefault();stuSearchGo();}">
+        <button class="btn" onclick="stuSearchGo()">ค้นหา</button>
+      </div>
+
+      <h3 style="font-size:15px; margin:18px 0 10px;">เพิ่มนักเรียนใหม่</h3>
+      <div id="stuAddAlert"></div>
+      <div class="row2">
+        <input type="text" id="stuNewNo" placeholder="เลขที่">
+        <input type="text" id="stuNewId" placeholder="รหัสนักเรียน">
+      </div>
+      <div class="row2" style="margin-top:10px;">
+        <input type="text" id="stuNewFirst" placeholder="ชื่อ">
+        <input type="text" id="stuNewLast" placeholder="นามสกุล">
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <input type="text" id="stuNewClass" placeholder="ชั้น">
+      </div>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="stuAdd()">เพิ่มนักเรียน</button>
+
+      <div id="stuArea" style="margin-top:20px;"><div class="loader">กำลังโหลดข้อมูล</div></div>
+      <div id="stuPager" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-top:14px; flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- ============ TEAMS LIST ============ -->
     <div class="panel">
       <h2>รายชื่อทีมที่สมัคร</h2>
       <div class="sub">เรียงตามลำดับการสมัคร คลิกเพื่อดู/แก้ไขสมาชิก</div>
-      <div id="teamsArea"><div class="loader">กำลังโหลดข้อมูล</div></div>
+      <div class="row2">
+        <input type="text" id="teamSearch" placeholder="ค้นหา ชื่อทีม/ชื่อสมาชิก/รหัสนักเรียน" onkeydown="if(event.key==='Enter'){event.preventDefault();teamSearchGo();}">
+        <button class="btn" onclick="teamSearchGo()">ค้นหา</button>
+      </div>
+      <div id="teamsArea" style="margin-top:16px;"><div class="loader">กำลังโหลดข้อมูล</div></div>
+      <div id="teamPager" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-top:14px; flex-wrap:wrap;"></div>
     </div>
 
   </div>
@@ -74,14 +109,22 @@
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script src="inapp-warning.js"></script>
+<script src="bottom-nav.js"></script>
 <script>
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function showAlert(elId, msg, ok){
     document.getElementById(elId).innerHTML = msg ? '<div class="alert '+(ok?'ok':'')+'">'+esc(msg).replace(/\n/g,'<br>')+'</div>' : '';
   }
+  function renderPager(elId, res, gotoFnName){
+    const el = document.getElementById(elId);
+    if(res.totalPages<=1){ el.innerHTML=''; return; }
+    el.innerHTML =
+      '<button class="btn btn-sm" '+(res.page<=1?'disabled':'')+' onclick="'+gotoFnName+'('+(res.page-1)+')">ก่อนหน้า</button>'+
+      '<span class="mono" style="font-size:13px;">หน้า '+res.page+' / '+res.totalPages+' (รวม '+res.total+' รายการ)</span>'+
+      '<button class="btn btn-sm" '+(res.page>=res.totalPages?'disabled':'')+' onclick="'+gotoFnName+'('+(res.page+1)+')">ถัดไป</button>';
+  }
 
   let adminToken = null;
-  let teamsCache = [];
 
   function doAdminLogin(){
     const pass = document.getElementById('adminPass').value;
@@ -91,22 +134,108 @@
       adminToken = res.token;
       document.getElementById('loginPanel').classList.add('hide');
       document.getElementById('adminArea').classList.remove('hide');
+      loadStudents();
       loadTeams();
     });
   }
 
+  /* ============ STUDENTS DATABASE ============ */
+  let stuPage = 1, stuSearchTerm = '', stuCache = [];
+
+  function stuSearchGo(){ stuSearchTerm = document.getElementById('stuSearch').value.trim(); stuPage = 1; loadStudents(); }
+  function gotoStuPage(p){ stuPage = p; loadStudents(); }
+
+  function loadStudents(){
+    document.getElementById('stuArea').innerHTML = '<div class="loader">กำลังโหลดข้อมูล</div>';
+    apiCall('adminGetStudents', { token: adminToken, page: stuPage, search: stuSearchTerm }, 'GET').then(function(res){
+      if(!res.ok){ document.getElementById('stuArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      stuCache = res.students;
+      renderStudents(res);
+    });
+  }
+
+  function renderStudents(res){
+    const el = document.getElementById('stuArea');
+    if(!res.students.length){ el.innerHTML = '<div class="empty">ไม่พบข้อมูลนักเรียน</div>'; renderPager('stuPager', res, 'gotoStuPage'); return; }
+    const rows = res.students.map(function(s){
+      return '<tr>'+
+        '<td>'+esc(s.no)+'</td>'+
+        '<td>'+esc(s.studentId)+'</td>'+
+        '<td>'+esc(s.firstName)+'</td>'+
+        '<td>'+esc(s.lastName)+'</td>'+
+        '<td>'+esc(s.className)+'</td>'+
+        '<td style="white-space:nowrap;">'+
+          '<button class="btn btn-sm" onclick="stuEdit(\''+s.studentId+'\')">แก้ไข</button> '+
+          '<button class="btn btn-sm btn-danger" onclick="stuDelete(\''+s.studentId+'\')">ลบ</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+    el.innerHTML = '<div class="team-card"><div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>เลขที่</th><th>รหัสนักเรียน</th><th>ชื่อ</th><th>นามสกุล</th><th>ชั้น</th><th>จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    renderPager('stuPager', res, 'gotoStuPage');
+  }
+
+  function stuAdd(){
+    const no = document.getElementById('stuNewNo').value.trim();
+    const sid = document.getElementById('stuNewId').value.trim();
+    const first = document.getElementById('stuNewFirst').value.trim();
+    const last = document.getElementById('stuNewLast').value.trim();
+    const cls = document.getElementById('stuNewClass').value.trim();
+    showAlert('stuAddAlert','');
+    if(!sid || !first || !last){ showAlert('stuAddAlert','กรุณากรอกรหัสนักเรียน ชื่อ และนามสกุล'); return; }
+    apiCall('adminAddStudent', { token: adminToken, no: no, studentId: sid, firstName: first, lastName: last, className: cls }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('stuAddAlert', res.message); return; }
+      document.getElementById('stuNewNo').value = '';
+      document.getElementById('stuNewId').value = '';
+      document.getElementById('stuNewFirst').value = '';
+      document.getElementById('stuNewLast').value = '';
+      document.getElementById('stuNewClass').value = '';
+      showAlert('stuAddAlert','เพิ่มนักเรียนสำเร็จ', true);
+      stuPage = 1;
+      loadStudents();
+    });
+  }
+
+  function stuEdit(sid){
+    const s = stuCache.find(x=>x.studentId===sid);
+    if(!s) return;
+    const no = prompt('เลขที่', s.no); if(no===null) return;
+    const newSid = prompt('รหัสนักเรียน', s.studentId); if(newSid===null) return;
+    const first = prompt('ชื่อ', s.firstName); if(first===null) return;
+    const last = prompt('นามสกุล', s.lastName); if(last===null) return;
+    const cls = prompt('ชั้น', s.className); if(cls===null) return;
+    apiCall('adminUpdateStudent', { token: adminToken, studentId: sid, fields: { no: no, studentId: newSid, firstName: first, lastName: last, className: cls } }, 'POST').then(function(res){
+      if(!res.ok){ alert(res.message); return; }
+      loadStudents();
+    });
+  }
+
+  function stuDelete(sid){
+    if(!confirm('ยืนยันลบนักเรียนรหัส '+sid+' ออกจากฐานข้อมูล?')) return;
+    apiCall('adminDeleteStudent', { token: adminToken, studentId: sid }, 'POST').then(function(res){
+      if(!res.ok){ alert(res.message); return; }
+      loadStudents();
+    });
+  }
+
+  /* ============ TEAMS ============ */
+  let teamPage = 1, teamSearchTerm = '', teamsCache = [];
+
+  function teamSearchGo(){ teamSearchTerm = document.getElementById('teamSearch').value.trim(); teamPage = 1; loadTeams(); }
+  function gotoTeamPage(p){ teamPage = p; loadTeams(); }
+
   function loadTeams(){
     document.getElementById('teamsArea').innerHTML = '<div class="loader">กำลังโหลดข้อมูล</div>';
-    apiCall('adminGetTeams', { token: adminToken }, 'GET').then(function(res){
+    apiCall('adminGetTeams', { token: adminToken, page: teamPage, search: teamSearchTerm }, 'GET').then(function(res){
       if(!res.ok){ document.getElementById('teamsArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
       teamsCache = res.teams;
       renderTeams();
+      renderPager('teamPager', res, 'gotoTeamPage');
     });
   }
 
   function renderTeams(){
     const el = document.getElementById('teamsArea');
-    if(!teamsCache.length){ el.innerHTML = '<div class="empty">ยังไม่มีทีมสมัคร</div>'; return; }
+    if(!teamsCache.length){ el.innerHTML = '<div class="empty">ไม่พบทีมที่ตรงกับการค้นหา</div>'; return; }
     el.innerHTML = teamsCache.map(function(t, idx){
       const rows = t.members.map(function(m){
         const isLeader = m.role==='หัวหน้าทีม';
@@ -135,7 +264,7 @@
           '</div>'+
         '</div>'+
         '<div id="teamBody'+idx+'" class="hide">'+
-          '<table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>เบอร์โทร</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+          '<div class="table-scroll"><div class="scroll-hint">← ปัดซ้าย-ขวาเพื่อดูข้อมูลเพิ่มเติม →</div><table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>เบอร์โทร</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
           '<div style="padding:16px 18px;">'+
             '<div class="sub" style="margin-bottom:8px;">เพิ่มสมาชิกเข้าทีมนี้ ('+t.members.length+'/5 คน)</div>'+
             (t.members.length>=5 ? '<div class="muted">ทีมนี้เต็มจำนวนแล้ว (5 คน)</div>' :
@@ -222,6 +351,8 @@
       apiCall('adminImportStudents', { token: adminToken, base64File: base64, fileName: file.name }, 'POST').then(function(res){
         if(!res.ok){ showAlert('importAlert', res.message); return; }
         showAlert('importAlert', 'นำเข้าสำเร็จ: เพิ่มใหม่ '+res.added+' รายการ, อัปเดต '+res.updated+' รายการ', true);
+        stuPage = 1;
+        loadStudents();
       });
     };
     reader.readAsDataURL(file);
