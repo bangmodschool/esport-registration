@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ADMIN PANEL</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <div class="t1">Tournament Registration</div>
+        <div class="t2">ADMIN CONTROL</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">สมัครแข่งขัน</a>
+      <a href="view.html">ผลการสมัคร</a>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">// Admin Only</div>
+    <h1>ระบบจัดการแอดมิน</h1>
+    <p>จัดการทีม เพิ่ม/แก้ไข/ลบสมาชิกได้ทุกกรณี นำเข้าฐานข้อมูลนักเรียน และส่งออกรายชื่อผู้สมัครเป็น Excel</p>
+  </div>
+
+  <div class="panel" id="loginPanel">
+    <h2>เข้าสู่ระบบแอดมิน</h2>
+    <div id="loginAlert"></div>
+    <div class="field">
+      <label>รหัสผ่านแอดมิน</label>
+      <input type="password" id="adminPass" onkeydown="if(event.key==='Enter'){event.preventDefault();doAdminLogin();}">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="doAdminLogin()">เข้าสู่ระบบ</button>
+  </div>
+
+  <div id="adminArea" class="hide">
+
+    <div class="panel">
+      <h2>เครื่องมือข้อมูล</h2>
+      <div class="sub">นำเข้าฐานข้อมูลนักเรียน (Excel) และส่งออกรายชื่อผู้สมัครแข่งขัน</div>
+      <div class="row2">
+        <div>
+          <label>นำเข้าฐานข้อมูลนักเรียน (.xlsx) — คอลัมน์: เลขที่, รหัสนักเรียน, ชื่อ, นามสกุล, ชั้น</label>
+          <input type="file" id="importFile" accept=".xlsx">
+          <button class="btn btn-block" style="margin-top:10px;" onclick="doImport()">นำเข้าไฟล์</button>
+          <div id="importAlert"></div>
+        </div>
+        <div>
+          <label>ส่งออกรายชื่อผู้สมัครแข่งขันทั้งหมด</label>
+          <button class="btn btn-primary btn-block" onclick="doExport()">ดาวน์โหลด Excel</button>
+          <div id="exportAlert"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>รายชื่อทีมที่สมัคร</h2>
+      <div class="sub">เรียงตามลำดับการสมัคร คลิกเพื่อดู/แก้ไขสมาชิก</div>
+      <div id="teamsArea"><div class="loader">กำลังโหลดข้อมูล</div></div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">BANGMOD WITTAYA SCHOOL // TOURNAMENT SYSTEM</div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="inapp-warning.js"></script>
+<script>
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function showAlert(elId, msg, ok){
+    document.getElementById(elId).innerHTML = msg ? '<div class="alert '+(ok?'ok':'')+'">'+esc(msg).replace(/\n/g,'<br>')+'</div>' : '';
+  }
+
+  let adminToken = null;
+  let teamsCache = [];
+
+  function doAdminLogin(){
+    const pass = document.getElementById('adminPass').value;
+    showAlert('loginAlert','');
+    apiCall('adminLogin', { password: pass }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('loginAlert', res.message); return; }
+      adminToken = res.token;
+      document.getElementById('loginPanel').classList.add('hide');
+      document.getElementById('adminArea').classList.remove('hide');
+      loadTeams();
+    });
+  }
+
+  function loadTeams(){
+    document.getElementById('teamsArea').innerHTML = '<div class="loader">กำลังโหลดข้อมูล</div>';
+    apiCall('adminGetTeams', { token: adminToken }, 'GET').then(function(res){
+      if(!res.ok){ document.getElementById('teamsArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      teamsCache = res.teams;
+      renderTeams();
+    });
+  }
+
+  function renderTeams(){
+    const el = document.getElementById('teamsArea');
+    if(!teamsCache.length){ el.innerHTML = '<div class="empty">ยังไม่มีทีมสมัคร</div>'; return; }
+    el.innerHTML = teamsCache.map(function(t, idx){
+      const rows = t.members.map(function(m){
+        const isLeader = m.role==='หัวหน้าทีม';
+        const statusBadge = m.status==='ตัวจริง' ? '<span class="badge">ตัวจริง</span>' : '<span class="badge member">สำรอง</span>';
+        return '<tr>'+
+          '<td>'+m.position+'</td>'+
+          '<td>'+esc(m.firstName)+' '+esc(m.lastName)+'</td>'+
+          '<td>'+esc(m.className)+'</td>'+
+          '<td>'+esc(m.phone)+'</td>'+
+          '<td>'+esc(m.gameName||'')+'</td>'+
+          '<td>'+(isLeader?'<span class="badge">หัวหน้าทีม</span>':'<span class="badge member">สมาชิก</span>')+'</td>'+
+          '<td>'+statusBadge+'</td>'+
+          '<td style="white-space:nowrap;">'+
+            '<button class="btn btn-sm" onclick="editMember(\''+m.studentId+'\')">แก้ไข</button> '+
+            '<button class="btn btn-sm btn-danger" onclick="deleteMember(\''+m.studentId+'\',\''+esc(t.teamName)+'\')">ลบ</button>'+
+          '</td>'+
+        '</tr>';
+      }).join('');
+      return '<div class="team-card">'+
+        '<div class="head" onclick="toggleTeam('+idx+')">'+
+          '<div><div class="entry">ENTRY #'+String(t.entryNo).padStart(3,'0')+'</div>'+
+          '<div class="tname">'+esc(t.teamName)+'</div></div>'+
+          '<div style="text-align:right;">'+
+            '<div class="time">'+esc(t.timestamp)+'</div>'+
+            '<button class="btn btn-sm btn-danger" style="margin-top:6px;" onclick="event.stopPropagation();deleteTeam(\''+t.teamId+'\',\''+esc(t.teamName)+'\')">ลบทั้งทีม</button>'+
+          '</div>'+
+        '</div>'+
+        '<div id="teamBody'+idx+'" class="hide">'+
+          '<table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>เบอร์โทร</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+          '<div style="padding:16px 18px;">'+
+            '<div class="sub" style="margin-bottom:8px;">เพิ่มสมาชิกเข้าทีมนี้ ('+t.members.length+'/5 คน)</div>'+
+            (t.members.length>=5 ? '<div class="muted">ทีมนี้เต็มจำนวนแล้ว (5 คน)</div>' :
+            '<div class="row2">'+
+              '<input type="text" placeholder="รหัสนักเรียน" id="addSid_'+idx+'">'+
+              '<input type="tel" placeholder="เบอร์โทรศัพท์" id="addPhone_'+idx+'">'+
+            '</div>'+
+            '<input type="text" placeholder="ชื่อตัวละครในเกม" id="addGame_'+idx+'" style="margin-top:10px;">'+
+            '<button class="btn btn-sm" style="margin-top:8px;" onclick="addMemberToTeam(\''+t.teamId+'\',\''+esc(t.teamName)+'\','+idx+')">เพิ่มสมาชิก</button>')+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function toggleTeam(idx){ document.getElementById('teamBody'+idx).classList.toggle('hide'); }
+
+  function editMember(sid){
+    const m = teamsCache.flatMap(t=>t.members).find(x=>x.studentId===sid);
+    if(!m) return;
+    const firstName = prompt('ชื่อ', m.firstName); if(firstName===null) return;
+    const lastName = prompt('นามสกุล', m.lastName); if(lastName===null) return;
+    const className = prompt('ชั้น', m.className); if(className===null) return;
+    const phone = prompt('เบอร์โทรศัพท์', m.phone); if(phone===null) return;
+    const gameName = prompt('ชื่อตัวละครในเกม', m.gameName || ''); if(gameName===null) return;
+    const role = confirm('ตั้งเป็นหัวหน้าทีม? (ตกลง = หัวหน้าทีม, ยกเลิก = สมาชิก)') ? 'หัวหน้าทีม' : 'สมาชิก';
+    apiCall('adminUpdateMember', { token: adminToken, studentId: sid, fields: { firstName: firstName, lastName: lastName, className: className, phone: phone, gameName: gameName, role: role } }, 'POST').then(function(res){
+      if(!res.ok){ alert(res.message); return; }
+      loadTeams();
+    });
+  }
+
+  function deleteMember(sid, teamName){
+    if(!confirm('ยืนยันลบสมาชิกนี้ออกจากทีม "'+teamName+'"?')) return;
+    apiCall('adminDeleteMember', { token: adminToken, studentId: sid }, 'POST').then(function(res){
+      if(!res.ok){ alert(res.message); return; }
+      loadTeams();
+    });
+  }
+
+  function deleteTeam(teamId, teamName){
+    if(!confirm('ยืนยันลบทีม "'+teamName+'" ทั้งทีม? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    apiCall('adminDeleteTeam', { token: adminToken, teamId: teamId }, 'POST').then(function(res){
+      if(!res.ok){ alert(res.message); return; }
+      loadTeams();
+    });
+  }
+
+  function addMemberToTeam(teamId, teamName, idx){
+    const sid = document.getElementById('addSid_'+idx).value.trim();
+    const phone = document.getElementById('addPhone_'+idx).value.trim();
+    const gameName = document.getElementById('addGame_'+idx).value.trim();
+    if(!sid || !phone || !gameName){ alert('กรุณากรอกรหัสนักเรียน เบอร์โทรศัพท์ และชื่อตัวละครในเกมให้ครบ'); return; }
+    apiCall('adminAddMember', { token: adminToken, teamId: teamId, teamName: teamName, studentId: sid, phone: phone, gameName: gameName, role: 'สมาชิก' }, 'POST').then(function(res){
+      if(!res.ok){ alert(res.message); return; }
+      loadTeams();
+    });
+  }
+
+  /* ------- Export ------- */
+  function doExport(){
+    showAlert('exportAlert','กำลังสร้างไฟล์...', true);
+    apiCall('adminExportExcel', { token: adminToken }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('exportAlert', res.message); return; }
+      const link = document.createElement('a');
+      link.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+res.base64;
+      link.download = res.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showAlert('exportAlert','ดาวน์โหลดไฟล์แล้ว', true);
+    });
+  }
+
+  /* ------- Import ------- */
+  function doImport(){
+    const fileInput = document.getElementById('importFile');
+    if(!fileInput.files.length){ showAlert('importAlert','กรุณาเลือกไฟล์ Excel'); return; }
+    const file = fileInput.files[0];
+    showAlert('importAlert','กำลังนำเข้าไฟล์...', true);
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const base64 = e.target.result.split(',')[1];
+      apiCall('adminImportStudents', { token: adminToken, base64File: base64, fileName: file.name }, 'POST').then(function(res){
+        if(!res.ok){ showAlert('importAlert', res.message); return; }
+        showAlert('importAlert', 'นำเข้าสำเร็จ: เพิ่มใหม่ '+res.added+' รายการ, อัปเดต '+res.updated+' รายการ', true);
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+</script>
+</body>
+</html>

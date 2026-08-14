@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ผลการสมัครแข่งขัน</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <div class="t1">Tournament Registration</div>
+        <div class="t2">BANGMOD E-SPORT ARENA</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">สมัครแข่งขัน</a>
+      <a class="active" href="view.html">ผลการสมัคร</a>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">// Roster Standings</div>
+    <h1>ทีมที่สมัครแข่งขันแล้ว</h1>
+    <p>รายชื่อทีมและสมาชิกที่สมัครสำเร็จ เรียงตามลำดับเวลาที่สมัคร</p>
+  </div>
+
+  <div id="content"><div class="loader">กำลังโหลดข้อมูล</div></div>
+
+  <div class="footer-note">BANGMOD WITTAYA SCHOOL // TOURNAMENT SYSTEM</div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="inapp-warning.js"></script>
+<script>
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function load(){
+    apiCall('getPublicResults', {}, 'GET').then(function(res){
+      if(!res.ok){
+        document.getElementById('content').innerHTML = '<div class="alert">โหลดข้อมูลไม่สำเร็จ: '+esc(res.message||'')+'</div>';
+        return;
+      }
+      render(res.teams);
+    });
+  }
+
+  function render(teams){
+    const el = document.getElementById('content');
+    if(!teams.length){ el.innerHTML = '<div class="empty">ยังไม่มีทีมสมัครเข้าแข่งขัน</div>'; return; }
+    el.innerHTML = teams.map(function(t, idx){
+      const rows = t.members.map(function(m){
+        const statusBadge = m.status==='ตัวจริง' ? '<span class="badge">ตัวจริง</span>' : '<span class="badge member">สำรอง</span>';
+        return '<tr><td>'+m.position+'</td><td>'+esc(m.firstName)+' '+esc(m.lastName)+'</td><td>'+esc(m.className)+'</td>'+
+          '<td>'+esc(m.gameName||'')+'</td>'+
+          '<td>'+(m.role==='หัวหน้าทีม' ? 'หัวหน้าทีม' : 'สมาชิก')+'</td>'+
+          '<td>'+statusBadge+'</td></tr>';
+      }).join('');
+      return '<div class="team-card">'+
+        '<div class="head" onclick="toggle('+idx+')">'+
+          '<div><div class="entry">ENTRY #'+String(t.entryNo).padStart(3,'0')+'</div>'+
+          '<div class="tname">'+esc(t.teamName)+'</div></div>'+
+          '<div class="time">'+esc(t.timestamp)+'</div>'+
+        '</div>'+
+        '<div id="body'+idx+'">'+
+          '<table><thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ชั้น</th><th>ชื่อในเกม</th><th>ตำแหน่ง</th><th>สถานะ</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function toggle(idx){
+    const el = document.getElementById('body'+idx);
+    el.classList.toggle('hide');
+  }
+
+  load();
+</script>
+</body>
+</html>

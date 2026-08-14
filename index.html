@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>สมัครแข่งขัน E-SPORT</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <div class="t1">Tournament Registration</div>
+        <div class="t2">BANGMOD E-SPORT ARENA</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a class="active" href="index.html">สมัครแข่งขัน</a>
+      <a href="view.html">ผลการสมัคร</a>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">// Enter the Arena</div>
+    <h1>รวมทีม ลงสนาม<br>ชิงแชมป์ E-SPORT</h1>
+    <p>สร้างทีม เพิ่มสมาชิกด้วยรหัสนักเรียน ระบบจะดึงชื่อ-นามสกุล-ชั้นให้อัตโนมัติ กรอกเบอร์โทรศัพท์และชื่อตัวละครในเกมให้ครบทุกคน แล้วยืนยันการสมัครได้ทันที</p>
+  </div>
+
+  <div class="tabs">
+    <button id="tabNewBtn" class="active" onclick="showTab('new')">สมัครทีมใหม่</button>
+    <button id="tabManageBtn" onclick="showTab('manage')">จัดการทีม (หัวหน้าทีม)</button>
+  </div>
+
+  <!-- ============ TAB: NEW TEAM ============ -->
+  <div id="tabNew">
+
+    <div class="steps">
+      <div class="step on" id="stepInd1">1. ตั้งชื่อทีม</div>
+      <div class="step" id="stepInd2">2. เพิ่มสมาชิก</div>
+      <div class="step" id="stepInd3">3. ยืนยันสมัคร</div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="panel" id="step1">
+      <h2>ตั้งชื่อทีม</h2>
+      <div class="sub">ตั้งชื่อทีมให้เท่ ให้จำง่าย จะใช้แสดงในหน้าผลการสมัคร (ห้ามซ้ำกับทีมอื่น)</div>
+      <div class="field">
+        <label>ชื่อทีม</label>
+        <input type="text" id="teamNameInput" placeholder="เช่น PHANTOM DRAGONS">
+      </div>
+      <div id="teamNameAlert"></div>
+      <button class="btn btn-primary btn-block" onclick="goStep2(event)">ถัดไป: เพิ่มสมาชิก</button>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel hide" id="step2">
+      <h2>เพิ่มสมาชิกทีม (<span id="memberCount">0</span>/5 คน)</h2>
+      <div class="sub">ทีม: <span class="mono" id="teamNameDisplay"></span> — คนแรกที่เพิ่มจะเป็น <span style="color:var(--gold)">หัวหน้าทีม</span> โดยอัตโนมัติ • ทีมนี้ต้องมีสมาชิกครบ <b>5 คน</b> (ลำดับ 1-4 = ตัวจริง, ลำดับ 5 = สำรอง)</div>
+
+      <div id="addAlert"></div>
+
+      <div id="addFormArea">
+        <div class="row2">
+          <div class="field">
+            <label>รหัสประจำตัวนักเรียน</label>
+            <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักเรียนแล้วกด แอด" onkeydown="if(event.key==='Enter'){event.preventDefault();doLookup();}">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn btn-block" id="addBtn" onclick="doLookup()">แอด (ค้นหา)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="previewCard"></div>
+
+      <div id="rosterList"></div>
+
+      <div style="display:flex; gap:10px; margin-top:18px;">
+        <button class="btn" onclick="backStep1()">ย้อนกลับ</button>
+        <button class="btn btn-primary" style="flex:1" id="toStep3Btn" onclick="goStep3()" disabled>ถัดไป: ยืนยันสมัคร</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="panel hide" id="step3">
+      <h2>ตรวจสอบและยืนยันการสมัคร</h2>
+      <div class="sub">ตรวจสอบข้อมูลทีมและสมาชิกให้ถูกต้องก่อนยืนยัน</div>
+      <div id="confirmSummary"></div>
+      <div id="submitAlert"></div>
+      <div style="display:flex; gap:10px; margin-top:18px;">
+        <button class="btn" onclick="backToStep2FromConfirm()">ย้อนกลับแก้ไข</button>
+        <button class="btn btn-primary" style="flex:1" id="submitBtn" onclick="doSubmit()">ยืนยันสมัครทีม</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="panel hide" id="stepSuccess">
+      <h2 style="color:var(--success)">✓ สมัครสำเร็จ!</h2>
+      <div id="successBody"></div>
+    </div>
+
+  </div>
+
+  <!-- ============ TAB: MANAGE TEAM ============ -->
+  <div id="tabManage" class="hide">
+
+    <div class="panel" id="loginPanel">
+      <h2>เข้าสู่ระบบหัวหน้าทีม</h2>
+      <div class="sub">กรอกรหัสนักเรียนและเบอร์โทรศัพท์ของหัวหน้าทีม เพื่อแก้ไข/เพิ่ม/ลบสมาชิก</div>
+      <div id="loginAlert"></div>
+      <div class="row2">
+        <div class="field">
+          <label>รหัสประจำตัวนักเรียน (หัวหน้าทีม)</label>
+          <input type="text" id="loginId">
+        </div>
+        <div class="field">
+          <label>เบอร์โทรศัพท์</label>
+          <input type="tel" id="loginPhone">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doTeamLogin()">เข้าสู่ระบบ</button>
+    </div>
+
+    <div class="panel hide" id="managePanel">
+      <h2>จัดการทีม: <span id="mgTeamName" class="mono"></span></h2>
+      <div class="sub">เฉพาะหัวหน้าทีมเท่านั้นที่แก้ไขได้ สมาชิกในทีมไม่สามารถแก้ไขได้</div>
+      <div id="mgAlert"></div>
+
+      <div class="field">
+        <label>เปลี่ยนชื่อทีม</label>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="mgTeamNameInput" style="flex:1">
+          <button class="btn btn-sm" onclick="mgRenameTeam()">บันทึก</button>
+        </div>
+      </div>
+
+      <h3 style="font-size:15px; margin:18px 0 10px;">รายชื่อสมาชิก</h3>
+      <div id="mgRoster"></div>
+
+      <h3 style="font-size:15px; margin:18px 0 10px;">เพิ่มสมาชิกใหม่ (<span id="mgCount">0</span>/5 คน)</h3>
+      <div id="mgAddAlert"></div>
+      <div id="mgAddFormArea">
+        <div class="row2">
+          <div class="field">
+            <label>รหัสประจำตัวนักเรียน</label>
+            <input type="text" id="mgNewId">
+          </div>
+          <div class="field">
+            <label>เบอร์โทรศัพท์</label>
+            <input type="tel" id="mgNewPhone">
+          </div>
+        </div>
+        <div class="field">
+          <label>ชื่อตัวละครในเกม</label>
+          <input type="text" id="mgNewGameName">
+        </div>
+        <button class="btn btn-block" onclick="mgAddMember()">เพิ่มสมาชิก</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">BANGMOD WITTAYA SCHOOL // TOURNAMENT SYSTEM</div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="inapp-warning.js"></script>
+<script>
+  /* ------------- TAB SWITCH ------------- */
+  function showTab(t){
+    document.getElementById('tabNew').classList.toggle('hide', t!=='new');
+    document.getElementById('tabManage').classList.toggle('hide', t!=='manage');
+    document.getElementById('tabNewBtn').classList.toggle('active', t==='new');
+    document.getElementById('tabManageBtn').classList.toggle('active', t==='manage');
+  }
+
+  /* ------------- NEW TEAM FLOW STATE ------------- */
+  const TEAM_SIZE = 5;
+  const STARTER_COUNT = 4;
+  let teamName = '';
+  let members = []; // {studentId, firstName, lastName, className, phone, gameName}
+
+  function posLabel(idx){ return idx < STARTER_COUNT ? 'ตัวจริง' : 'สำรอง'; }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function setStepInd(n){
+    for(let i=1;i<=3;i++){
+      const el = document.getElementById('stepInd'+i);
+      el.classList.remove('on','done');
+      if(i<n) el.classList.add('done');
+      if(i===n) el.classList.add('on');
+    }
+  }
+
+  function showAlert(elId, msg, ok){
+    document.getElementById(elId).innerHTML = msg ? '<div class="alert '+(ok?'ok':'')+'">'+esc(msg).replace(/\n/g,'<br>')+'</div>' : '';
+  }
+
+  function goStep2(evt){
+    const v = document.getElementById('teamNameInput').value.trim();
+    if(!v){ showAlert('teamNameAlert','กรุณาตั้งชื่อทีม'); return; }
+    const btn = evt.target;
+    btn.disabled = true; btn.textContent = 'กำลังตรวจสอบชื่อทีม...';
+    apiCall('checkTeamNameAvailable', { name: v }, 'GET').then(function(res){
+      btn.disabled = false; btn.textContent = 'ถัดไป: เพิ่มสมาชิก';
+      if(!res.ok){ showAlert('teamNameAlert', res.message); return; }
+      showAlert('teamNameAlert','');
+      teamName = v;
+      document.getElementById('teamNameDisplay').textContent = teamName;
+      document.getElementById('step1').classList.add('hide');
+      document.getElementById('step2').classList.remove('hide');
+      setStepInd(2);
+    });
+  }
+  function backStep1(){
+    document.getElementById('step2').classList.add('hide');
+    document.getElementById('step1').classList.remove('hide');
+    setStepInd(1);
+  }
+
+  let pendingStudent = null;
+  function doLookup(){
+    const idInput = document.getElementById('studentIdInput');
+    const sid = idInput.value.trim();
+    showAlert('addAlert','');
+    document.getElementById('previewCard').innerHTML = '';
+    if(members.length>=TEAM_SIZE){ showAlert('addAlert','ทีมนี้มีสมาชิกครบ 5 คนแล้ว'); return; }
+    if(!sid){ showAlert('addAlert','กรุณากรอกรหัสนักเรียน'); return; }
+    if(members.some(m=>m.studentId===sid)){ showAlert('addAlert','รหัสนี้อยู่ในทีมนี้แล้ว'); return; }
+    const btn = document.getElementById('addBtn');
+    btn.disabled = true; btn.textContent = 'กำลังค้นหา...';
+    apiCall('lookupStudent', { studentId: sid }, 'GET').then(function(res){
+      btn.disabled = false; btn.textContent = 'แอด (ค้นหา)';
+      if(!res.ok){ showAlert('addAlert', res.message); return; }
+      pendingStudent = res.student;
+      const isLeader = members.length===0;
+      const posText = posLabel(members.length);
+      document.getElementById('previewCard').innerHTML =
+        '<div class="roster-item '+(isLeader?'leader':'')+'">'+
+          '<div class="info">'+
+            '<div class="name">'+esc(pendingStudent.firstName)+' '+esc(pendingStudent.lastName)+'</div>'+
+            '<div class="meta">ชั้น '+esc(pendingStudent.className)+' • รหัส '+esc(pendingStudent.studentId)+' • ลำดับ '+(members.length+1)+' ('+posText+')</div>'+
+          '</div>'+
+          '<div class="badge '+(isLeader?'':'member')+'">'+(isLeader?'หัวหน้าทีม':'สมาชิก')+'</div>'+
+        '</div>'+
+        '<div class="row2" style="margin-top:12px;">'+
+          '<div class="field"><label>เบอร์โทรศัพท์ของ '+esc(pendingStudent.firstName)+'</label>'+
+          '<input type="tel" id="pendingPhone" placeholder="0812345678"></div>'+
+          '<div class="field"><label>ชื่อตัวละครในเกม</label>'+
+          '<input type="text" id="pendingGameName" placeholder="เช่น ShadowStriker"></div>'+
+        '</div>'+
+        '<button class="btn btn-primary btn-block" onclick="confirmAddMember()">ยืนยันเพิ่มเข้าทีม</button>';
+    });
+  }
+
+  function confirmAddMember(){
+    const phone = document.getElementById('pendingPhone').value.trim();
+    const gameName = document.getElementById('pendingGameName').value.trim();
+    if(!phone || phone.length<9){ showAlert('addAlert','กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง'); return; }
+    if(!gameName){ showAlert('addAlert','กรุณากรอกชื่อตัวละครในเกม'); return; }
+    members.push({ studentId: pendingStudent.studentId, firstName: pendingStudent.firstName, lastName: pendingStudent.lastName, className: pendingStudent.className, phone: phone, gameName: gameName });
+    pendingStudent = null;
+    document.getElementById('previewCard').innerHTML = '';
+    document.getElementById('studentIdInput').value = '';
+    showAlert('addAlert','');
+    renderRoster();
+  }
+
+  function removeMember(sid){
+    members = members.filter(m=>m.studentId!==sid);
+    renderRoster();
+  }
+
+  function renderRoster(){
+    const el = document.getElementById('rosterList');
+    document.getElementById('memberCount').textContent = members.length;
+    if(members.length===0){ el.innerHTML = '<div class="muted">ยังไม่มีสมาชิกในทีม</div>'; }
+    else {
+      el.innerHTML = members.map((m,i)=>{
+        const isLeader = i===0;
+        return '<div class="roster-item '+(isLeader?'leader':'')+'">'+
+          '<div class="info"><div class="name">'+esc(m.firstName)+' '+esc(m.lastName)+' <span class="mono" style="color:var(--dim); font-size:12px;">@'+esc(m.gameName)+'</span></div>'+
+          '<div class="meta">ชั้น '+esc(m.className)+' • รหัส '+esc(m.studentId)+' • โทร '+esc(m.phone)+' • ลำดับ '+(i+1)+' ('+posLabel(i)+')</div></div>'+
+          '<div class="badge '+(isLeader?'':'member')+'">'+(isLeader?'หัวหน้าทีม':'สมาชิก')+'</div>'+
+          '<button class="btn btn-sm btn-danger" onclick="removeMember(\''+m.studentId+'\')">ลบ</button>'+
+        '</div>';
+      }).join('');
+    }
+    document.getElementById('toStep3Btn').disabled = members.length!==TEAM_SIZE;
+    document.getElementById('addFormArea').classList.toggle('hide', members.length>=TEAM_SIZE);
+    document.getElementById('previewCard').innerHTML = '';
+  }
+
+  function goStep3(){
+    document.getElementById('confirmSummary').innerHTML =
+      '<div class="roster-item leader" style="border-left-color:var(--magenta)">'+
+        '<div class="info"><div class="name">ชื่อทีม: '+esc(teamName)+'</div>'+
+        '<div class="meta">จำนวนสมาชิก '+members.length+' คน</div></div>'+
+      '</div>'+
+      members.map((m,i)=>{
+        const isLeader = i===0;
+        return '<div class="roster-item '+(isLeader?'leader':'')+'">'+
+          '<div class="info"><div class="name">'+esc(m.firstName)+' '+esc(m.lastName)+' <span class="mono" style="color:var(--dim); font-size:12px;">@'+esc(m.gameName)+'</span></div>'+
+          '<div class="meta">ชั้น '+esc(m.className)+' • รหัส '+esc(m.studentId)+' • โทร '+esc(m.phone)+' • ลำดับ '+(i+1)+' ('+posLabel(i)+')</div></div>'+
+          '<div class="badge '+(isLeader?'':'member')+'">'+(isLeader?'หัวหน้าทีม':'สมาชิก')+'</div>'+
+        '</div>';
+      }).join('');
+    document.getElementById('step2').classList.add('hide');
+    document.getElementById('step3').classList.remove('hide');
+    setStepInd(3);
+  }
+  function backToStep2FromConfirm(){
+    document.getElementById('step3').classList.add('hide');
+    document.getElementById('step2').classList.remove('hide');
+    setStepInd(2);
+  }
+
+  function doSubmit(){
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    showAlert('submitAlert','');
+    apiCall('submitRegistration', { teamName: teamName, members: members }, 'POST').then(function(res){
+      btn.disabled = false; btn.textContent = 'ยืนยันสมัครทีม';
+      if(!res.ok){ showAlert('submitAlert', res.message); return; }
+      document.getElementById('step3').classList.add('hide');
+      setStepInd(3);
+      document.getElementById('successBody').innerHTML =
+        '<div class="roster-item leader"><div class="info">'+
+        '<div class="name">ทีม '+esc(res.teamName)+'</div>'+
+        '<div class="meta">สมัครสำเร็จเมื่อ '+esc(res.timestamp)+'</div></div></div>'+
+        '<p class="muted" style="margin-top:14px;">หัวหน้าทีมสามารถเข้าไปแก้ไขสมาชิกทีมได้ที่แท็บ <b>"จัดการทีม (หัวหน้าทีม)"</b> โดยใช้รหัสนักเรียนและเบอร์โทรศัพท์ของหัวหน้าทีม</p>'+
+        '<a href="view.html" class="btn btn-primary" style="display:inline-block;margin-top:12px;text-decoration:none;">ดูผลการสมัครทั้งหมด</a>';
+      document.getElementById('stepSuccess').classList.remove('hide');
+    });
+  }
+
+  renderRoster();
+
+  /* ------------- MANAGE TEAM (LEADER) ------------- */
+  let mgTeamId = null, mgToken = null;
+
+  function doTeamLogin(){
+    const sid = document.getElementById('loginId').value.trim();
+    const phone = document.getElementById('loginPhone').value.trim();
+    showAlert('loginAlert','');
+    if(!sid || !phone){ showAlert('loginAlert','กรุณากรอกรหัสนักเรียนและเบอร์โทรศัพท์'); return; }
+    apiCall('teamLogin', { studentId: sid, phone: phone }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('loginAlert', res.message); return; }
+      mgTeamId = res.teamId; mgToken = res.token;
+      document.getElementById('loginPanel').classList.add('hide');
+      document.getElementById('managePanel').classList.remove('hide');
+      document.getElementById('mgTeamName').textContent = res.teamName;
+      document.getElementById('mgTeamNameInput').value = res.teamName;
+      renderMgRoster(res.members);
+    });
+  }
+
+  function renderMgRoster(list){
+    const el = document.getElementById('mgRoster');
+    document.getElementById('mgCount').textContent = list.length;
+    document.getElementById('mgAddFormArea').classList.toggle('hide', list.length>=5);
+    el.innerHTML = list.map((m,i)=>{
+      const isLeader = m.role==='หัวหน้าทีม';
+      const posText = m.status || (i<4?'ตัวจริง':'สำรอง');
+      return '<div class="roster-item '+(isLeader?'leader':'')+'">'+
+        '<div class="info"><div class="name">'+esc(m.firstName)+' '+esc(m.lastName)+'</div>'+
+        '<div class="meta">ชั้น '+esc(m.className)+' • รหัส '+esc(m.studentId)+' • ลำดับ '+(i+1)+' ('+posText+')</div>'+
+        '<div class="row2" style="margin-top:8px;">'+
+          '<div class="field"><label>เบอร์โทรศัพท์</label><input type="tel" value="'+esc(m.phone)+'" id="phone_'+esc(m.studentId)+'"></div>'+
+          '<div class="field"><label>ชื่อตัวละครในเกม</label><input type="text" value="'+esc(m.gameName||'')+'" id="game_'+esc(m.studentId)+'"></div>'+
+        '</div>'+
+        '</div>'+
+        '<div class="badge '+(isLeader?'':'member')+'">'+(isLeader?'หัวหน้าทีม':'สมาชิก')+'</div>'+
+        '<div style="display:flex; flex-direction:column; gap:6px;">'+
+          '<button class="btn btn-sm" onclick="mgUpdateContact(\''+m.studentId+'\')">บันทึก</button>'+
+          (isLeader?'':'<button class="btn btn-sm btn-danger" onclick="mgRemoveMember(\''+m.studentId+'\')">ลบออก</button>')+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function mgRenameTeam(){
+    const v = document.getElementById('mgTeamNameInput').value.trim();
+    if(!v) return;
+    apiCall('teamUpdateTeamName', { teamId: mgTeamId, token: mgToken, newName: v }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('mgAlert', res.message); return; }
+      document.getElementById('mgTeamName').textContent = res.teamName;
+      showAlert('mgAlert','บันทึกชื่อทีมแล้ว', true);
+    });
+  }
+
+  function mgUpdateContact(sid){
+    const phone = document.getElementById('phone_'+sid).value.trim();
+    const gameName = document.getElementById('game_'+sid).value.trim();
+    apiCall('teamUpdateMemberContact', { teamId: mgTeamId, token: mgToken, studentId: sid, phone: phone, gameName: gameName }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('mgAlert', res.message); return; }
+      if(res.token) mgToken = res.token;
+      showAlert('mgAlert','บันทึกข้อมูลแล้ว', true);
+      renderMgRoster(res.members);
+    });
+  }
+
+  function mgRemoveMember(sid){
+    if(!confirm('ยืนยันลบสมาชิกนี้ออกจากทีม?')) return;
+    apiCall('teamRemoveMember', { teamId: mgTeamId, token: mgToken, studentId: sid }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('mgAlert', res.message); return; }
+      renderMgRoster(res.members);
+    });
+  }
+
+  function mgAddMember(){
+    const sid = document.getElementById('mgNewId').value.trim();
+    const phone = document.getElementById('mgNewPhone').value.trim();
+    const gameName = document.getElementById('mgNewGameName').value.trim();
+    showAlert('mgAddAlert','');
+    if(!sid || !phone || !gameName){ showAlert('mgAddAlert','กรุณากรอกรหัสนักเรียน เบอร์โทรศัพท์ และชื่อตัวละครในเกมให้ครบ'); return; }
+    apiCall('teamAddMember', { teamId: mgTeamId, token: mgToken, studentId: sid, phone: phone, gameName: gameName }, 'POST').then(function(res){
+      if(!res.ok){ showAlert('mgAddAlert', res.message); return; }
+      document.getElementById('mgNewId').value='';
+      document.getElementById('mgNewPhone').value='';
+      document.getElementById('mgNewGameName').value='';
+      renderMgRoster(res.members);
+    });
+  }
+</script>
+</body>
+</html>
