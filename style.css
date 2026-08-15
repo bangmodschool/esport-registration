@@ -84,6 +84,20 @@
     border:1px solid var(--line);
     clip-path:polygon(0 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%);
     animation:fadeUp .5s ease both;
+    display:flex; gap:26px; align-items:flex-start; flex-wrap:wrap;
+  }
+  .hero-main{ flex:1; min-width:240px; }
+  .hero-side{ width:210px; flex:none; display:flex; flex-direction:column; gap:10px; }
+  .qr-box{ display:block; background:#fff; padding:8px; border:1px solid var(--line); line-height:0; }
+  .qr-box img{ width:100%; height:auto; display:block; }
+  .line-btn{
+    background:#06c755; color:#fff !important; border:none; font-weight:700;
+    text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .line-btn:hover{ filter:brightness(1.08); box-shadow:0 0 18px rgba(6,199,85,.5); }
+  @media (max-width:720px){
+    .hero{ flex-direction:column; }
+    .hero-side{ width:100%; max-width:260px; margin:4px auto 0; }
   }
   .hero::after{
     content:'';position:absolute; left:0; right:0; top:0; height:2px;
