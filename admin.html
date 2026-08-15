@@ -42,13 +42,23 @@
 
   <div id="adminArea" class="hide">
 
+    <div style="text-align:right; margin-bottom:-6px;">
+      <button class="btn btn-sm" onclick="adminLogout()">ออกจากระบบ</button>
+    </div>
+
     <!-- ============ SYSTEM CONTROL ============ -->
     <div class="panel">
       <h2>ควบคุมระบบ</h2>
-      <div class="sub">เปิด/ปิดการรับสมัครทีมใหม่ (หัวหน้าทีมยังจัดการทีมเดิมได้ตามปกติแม้ปิดรับสมัคร)</div>
-      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <div class="sub">เปิด/ปิดการรับสมัครทีมใหม่ และการจัดการทีมของหัวหน้าทีม แยกกันคนละสวิตช์</div>
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:14px;">
+        <span class="muted" style="min-width:150px;">รับสมัครทีมใหม่:</span>
         <span id="regStatusPill" class="status-pill on"><span class="status-dot"></span><span id="regStatusText">กำลังโหลดสถานะ...</span></span>
         <button class="btn" id="regToggleBtn" onclick="toggleRegistration(event)">เปลี่ยนสถานะ</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <span class="muted" style="min-width:150px;">จัดการทีม (หัวหน้าทีม):</span>
+        <span id="mgmtStatusPill" class="status-pill on"><span class="status-dot"></span><span id="mgmtStatusText">กำลังโหลดสถานะ...</span></span>
+        <button class="btn" id="mgmtToggleBtn" onclick="toggleTeamManagement(event)">เปลี่ยนสถานะ</button>
       </div>
     </div>
 
@@ -76,7 +86,7 @@
       <div class="sub">ค้นหา/แก้ไข/ลบรายชื่อนักเรียนในระบบได้โดยตรง — รหัสนักเรียนห้ามซ้ำกับที่มีอยู่แล้ว บันทึกลง Sheet ทันทีทุกครั้งที่ยืนยัน</div>
 
       <div class="row2">
-        <input type="text" id="stuSearch" placeholder="ค้นหา ชื่อ/นามสกุล/รหัสนักเรียน/ชั้น" onkeydown="if(event.key==='Enter'){event.preventDefault();stuSearchGo(event);}">
+        <input type="text" id="stuSearch" placeholder="พิมพ์เพื่อค้นหาแบบเรียลไทม์..." oninput="debouncedStuSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();stuSearchGo(event);}">
         <button class="btn" onclick="stuSearchGo(event)">ค้นหา</button>
       </div>
 
@@ -91,7 +101,7 @@
       <h2>รายชื่อทีมที่สมัคร</h2>
       <div class="sub">เรียงตามลำดับการสมัคร คลิกเพื่อดู/แก้ไขสมาชิก</div>
       <div class="row2">
-        <input type="text" id="teamSearch" placeholder="ค้นหา ชื่อทีม/ชื่อสมาชิก/รหัสนักเรียน" onkeydown="if(event.key==='Enter'){event.preventDefault();teamSearchGo(event);}">
+        <input type="text" id="teamSearch" placeholder="พิมพ์เพื่อค้นหาแบบเรียลไทม์..." oninput="debouncedTeamSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();teamSearchGo(event);}">
         <button class="btn" onclick="teamSearchGo(event)">ค้นหา</button>
       </div>
       <div id="teamsArea" style="margin-top:16px;"><div class="loader">กำลังโหลดข้อมูล</div></div>
@@ -109,6 +119,13 @@
 <script src="bottom-nav.js"></script>
 <script>
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function debounce(fn, delay){
+    let timer;
+    return function(...args){
+      clearTimeout(timer);
+      timer = setTimeout(function(){ fn.apply(null, args); }, delay);
+    };
+  }
   function showAlert(elId, msg, ok){
     document.getElementById(elId).innerHTML = msg ? '<div class="alert '+(ok?'ok':'')+'">'+esc(msg).replace(/\n/g,'<br>')+'</div>' : '';
   }
@@ -149,6 +166,16 @@
   }
 
   let adminToken = null;
+  const ADMIN_TOKEN_KEY = 'ff_admin_token';
+
+  function enterAdminArea(){
+    document.getElementById('loginPanel').classList.add('hide');
+    document.getElementById('adminArea').classList.remove('hide');
+    loadRegStatus();
+    loadMgmtStatus();
+    loadStudents();
+    loadTeams();
+  }
 
   function doAdminLogin(evt){
     const pass = document.getElementById('adminPass').value;
@@ -159,12 +186,33 @@
       setBtnLoading(btn, false, 'เข้าสู่ระบบ');
       if(!res.ok){ showAlert('loginAlert', res.message); return; }
       adminToken = res.token;
-      document.getElementById('loginPanel').classList.add('hide');
-      document.getElementById('adminArea').classList.remove('hide');
-      loadRegStatus();
-      loadStudents();
-      loadTeams();
+      localStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
+      enterAdminArea();
     });
+  }
+
+  function adminLogout(){
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    location.reload();
+  }
+
+  // ถ้าเคยล็อกอินไว้แล้วในเครื่องนี้ ให้เข้าระบบต่ออัตโนมัติโดยไม่ต้องกรอกรหัสผ่านซ้ำ
+  (function autoRestoreAdminSession(){
+    const saved = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if(saved){
+      adminToken = saved;
+      enterAdminArea();
+    }
+  })();
+
+  // ถ้า token ที่จำไว้ใช้ไม่ได้แล้ว (เช่น เปลี่ยนรหัสผ่านแอดมินจากที่อื่น) ให้เด้งกลับไปหน้าล็อกอิน
+  function handleAuthError(res){
+    if(res && res.message === 'ไม่มีสิทธิ์เข้าถึง'){
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      location.reload();
+      return true;
+    }
+    return false;
   }
 
   /* ============ SYSTEM CONTROL ============ */
@@ -195,16 +243,44 @@
     });
   }
 
+  let mgmtOpen = true;
+  function loadMgmtStatus(){
+    apiCall('getTeamManagementStatus', {}, 'GET').then(function(res){
+      if(!res.ok) return;
+      mgmtOpen = res.open;
+      renderMgmtStatus();
+    });
+  }
+  function renderMgmtStatus(){
+    const pill = document.getElementById('mgmtStatusPill');
+    const text = document.getElementById('mgmtStatusText');
+    pill.classList.toggle('on', mgmtOpen);
+    pill.classList.toggle('off', !mgmtOpen);
+    text.textContent = mgmtOpen ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+    document.getElementById('mgmtToggleBtn').textContent = mgmtOpen ? 'ปิดใช้งาน' : 'เปิดใช้งาน';
+  }
+  function toggleTeamManagement(evt){
+    const btn = evt.target;
+    setBtnLoading(btn, true, '');
+    apiCall('adminSetTeamManagementStatus', { token: adminToken, open: !mgmtOpen }, 'POST').then(function(res){
+      setBtnLoading(btn, false, '');
+      if(!res.ok){ alert(res.message); renderMgmtStatus(); return; }
+      mgmtOpen = res.open;
+      renderMgmtStatus();
+    });
+  }
+
   /* ============ STUDENTS DATABASE ============ */
   let stuPage = 1, stuSearchTerm = '', stuCache = [];
 
   function stuSearchGo(evt){ stuSearchTerm = document.getElementById('stuSearch').value.trim(); stuPage = 1; loadStudents(); }
+  const debouncedStuSearch = debounce(function(){ stuSearchGo(); }, 400);
   function gotoStuPage(p){ stuPage = p; loadStudents(); }
 
   function loadStudents(){
     document.getElementById('stuArea').innerHTML = '<div class="loader">กำลังโหลดข้อมูล</div>';
     apiCall('adminGetStudents', { token: adminToken, page: stuPage, search: stuSearchTerm }, 'GET').then(function(res){
-      if(!res.ok){ document.getElementById('stuArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      if(!res.ok){ if(handleAuthError(res)) return; document.getElementById('stuArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
       stuCache = res.students;
       renderStudents(res);
     });
@@ -324,12 +400,13 @@
   let teamPage = 1, teamSearchTerm = '', teamsCache = [];
 
   function teamSearchGo(evt){ teamSearchTerm = document.getElementById('teamSearch').value.trim(); teamPage = 1; loadTeams(); }
+  const debouncedTeamSearch = debounce(function(){ teamSearchGo(); }, 400);
   function gotoTeamPage(p){ teamPage = p; loadTeams(); }
 
   function loadTeams(){
     document.getElementById('teamsArea').innerHTML = '<div class="loader">กำลังโหลดข้อมูล</div>';
     apiCall('adminGetTeams', { token: adminToken, page: teamPage, search: teamSearchTerm }, 'GET').then(function(res){
-      if(!res.ok){ document.getElementById('teamsArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
+      if(!res.ok){ if(handleAuthError(res)) return; document.getElementById('teamsArea').innerHTML = '<div class="alert">'+esc(res.message)+'</div>'; return; }
       teamsCache = res.teams;
       renderTeams();
       renderPager('teamPager', res, 'gotoTeamPage');

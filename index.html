@@ -31,8 +31,9 @@
   </div>
 
   <div class="tabs">
-    <button id="tabNewBtn" class="active" onclick="showTab('new')">สมัครทีมใหม่</button>
+    <button id="tabNewBtn" class="active" onclick="showTab('new')">สร้างทีม</button>
     <button id="tabManageBtn" onclick="showTab('manage')">จัดการทีม (หัวหน้าทีม)</button>
+    <button id="tabRulesBtn" onclick="showTab('rules')">กติกา และสอบถามเพิ่มเติม</button>
   </div>
 
   <!-- ============ TAB: NEW TEAM ============ -->
@@ -74,11 +75,11 @@
         <div class="row2">
           <div class="field">
             <label>รหัสประจำตัวนักเรียน</label>
-            <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักเรียนแล้วกด แอด" onkeydown="if(event.key==='Enter'){event.preventDefault();doLookup();}">
+            <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักเรียนแล้วค้นหาสมาชิก" oninput="debouncedAutoLookup()" onkeydown="if(event.key==='Enter'){event.preventDefault();doLookup();}">
           </div>
           <div class="field">
             <label>&nbsp;</label>
-            <button class="btn btn-block" id="addBtn" onclick="doLookup()">แอด (ค้นหา)</button>
+            <button class="btn btn-block" id="addBtn" onclick="doLookup()">ค้นหาสมาชิก</button>
           </div>
         </div>
       </div>
@@ -116,6 +117,12 @@
 
   <!-- ============ TAB: MANAGE TEAM ============ -->
   <div id="tabManage" class="hide">
+
+    <div class="panel closed-banner hide" id="mgmtClosedBanner">
+      <div class="icon">🔒</div>
+      <h2>แก้ไขข้อมูลสมาชิก</h2>
+      <p>กรุณาติดต่อครูผู้ดูแลกิจกรรม</p>
+    </div>
 
     <div class="panel" id="loginPanel">
       <h2>เข้าสู่ระบบหัวหน้าทีม</h2>
@@ -171,6 +178,73 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ============ TAB: RULES ============ -->
+  <div id="tabRules" class="hide">
+    <div class="panel rules-panel">
+      <h2>🏆 UNIF TEA FREEFIRE SCHOOL TOURNAMENT 🏆</h2>
+      <div class="sub">กติกาการแข่งขันและข้อมูลติดต่อสอบถามเพิ่มเติม</div>
+
+      <h3>วิธีการลงทะเบียน</h3>
+      <ol>
+        <li>ให้หัวหน้าทีมเป็นผู้เลือกโรงเรียนที่ตัวเองสังกัดอยู่ และเป็นคนกรอกข้อมูลให้ลูกทีม</li>
+        <li>ผู้เข้าแข่งขันทุกคนสามารถเข้า Discord เพื่อสอบถามข้อมูล ติดต่อแอดมินเวลาที่เกิดปัญหา และเช็กสายการแข่งขันในช่องแชทของโรงเรียนที่ตัวเองสังกัด: <a href="https://discord.gg/ntBg4qjqAC" target="_blank" rel="noopener">discord.gg/ntBg4qjqAC</a></li>
+        <li>ต้องกรอกข้อมูลตาม Google Form ให้ครบตามที่ Tournament กำหนด</li>
+      </ol>
+
+      <h3 style="margin-top:20px;">⚠️ ข้อควรระวังสำหรับนักกีฬา</h3>
+      <ul>
+        <li>รายงานตัวให้ตรงเวลา หากทีมใดมาไม่ครบในเวลาเริ่มแข่ง จะเริ่มเกมตามจำนวนคนที่อยู่</li>
+        <li>ห้ามใช้โปรแกรมช่วยเล่นหรือบัคของเกม หากตรวจพบปรับแพ้ทันที</li>
+        <li>แนะนำให้ใช้เน็ตมือถือส่วนตัวเพื่อความเสถียรในการแข่งขัน</li>
+      </ul>
+
+      <h3 style="margin-top:20px;">🛠️ การตั้งค่าห้องแข่งขัน (Custom Room)</h3>
+      <div class="table-scroll"><table>
+        <tr><td>อุปกรณ์</td><td>ใช้เฉพาะโทรศัพท์มือถือ (ห้าม Tablet / iPad / Emulator)</td></tr>
+        <tr><td>สกิลตัวละคร</td><td>เปิด (On)</td></tr>
+        <tr><td>คุณสมบัติชุดปืน (Gun Skins)</td><td>ปิด (Off) เพื่อความเท่าเทียม</td></tr>
+        <tr><td>จำกัดกระสุน/ไอซ์วอลล์</td><td>ใช่ (Yes)</td></tr>
+        <tr><td>ระบบช่วยเล็ง</td><td>มาตรฐาน</td></tr>
+        <tr><td>Death Spectate (ตายแล้วดูต่อ)</td><td>ปิด (Off)</td></tr>
+      </table></div>
+
+      <h3 style="margin-top:20px;">📅 กำหนดการแข่งขัน (24 ทีม)</h3>
+      <div class="table-scroll"><table>
+        <thead><tr><th>เวลา</th><th>รายการ</th></tr></thead>
+        <tr><td class="mono">09.30-10.00</td><td>ลงทะเบียนรายงานตัวนักกีฬา และรับฟัง Brief กติกา</td></tr>
+        <tr><td class="mono">10.00-11.00</td><td>รอบคัดเลือก Group A 12 ทีม (2 แมตช์: Bermuda / Purgatory)</td></tr>
+        <tr><td class="mono">11.00-12.00</td><td>รอบคัดเลือก Group B 12 ทีม (2 แมตช์: Bermuda / Purgatory)</td></tr>
+        <tr><td class="mono">12.00-13.00</td><td>พักเที่ยง และประกาศรายชื่อ 12 ทีมสุดท้าย (Top 6 ของแต่ละกลุ่ม)</td></tr>
+        <tr><td class="mono">13.00-14.00</td><td>รอบ Grand Final (2 แมตช์: Bermuda / Nexterra)</td></tr>
+        <tr><td class="mono">14.00-14.15</td><td>สรุปคะแนน ประกาศผล และมอบรางวัล</td></tr>
+      </table></div>
+
+      <h3 style="margin-top:20px;">📊 เกณฑ์การนับคะแนน (Pro League Standard)</h3>
+      <p class="muted" style="margin-bottom:10px;">คะแนนรวม = คะแนนอันดับ + คะแนนกำจัด (Kill) — คะแนนกำจัด: 1 คะแนน ต่อ 1 Kill</p>
+      <div class="table-scroll"><table>
+        <thead><tr><th>อันดับ</th><th>คะแนน</th></tr></thead>
+        <tr><td>1 (Booyah!)</td><td>12 แต้ม</td></tr>
+        <tr><td>2</td><td>9 แต้ม</td></tr>
+        <tr><td>3</td><td>8 แต้ม</td></tr>
+        <tr><td>4</td><td>7 แต้ม</td></tr>
+        <tr><td>5</td><td>6 แต้ม</td></tr>
+        <tr><td>6</td><td>5 แต้ม</td></tr>
+        <tr><td>7</td><td>4 แต้ม</td></tr>
+        <tr><td>8</td><td>3 แต้ม</td></tr>
+        <tr><td>9</td><td>2 แต้ม</td></tr>
+        <tr><td>10</td><td>1 แต้ม</td></tr>
+        <tr><td>11-12</td><td>0 แต้ม</td></tr>
+      </table></div>
+
+      <h3 style="margin-top:20px;">💰 เงินรางวัลสำหรับทีมคะแนนสูงสุด 4 อันดับ</h3>
+      <div class="prize-item"><span class="rank">อันดับ 1</span><span class="amount">1,500 บาท + ผลิตภัณฑ์ Unif Tea</span></div>
+      <div class="prize-item"><span class="rank">อันดับ 2</span><span class="amount">1,000 บาท + ผลิตภัณฑ์ Unif Tea</span></div>
+      <div class="prize-item"><span class="rank">อันดับ 3-4</span><span class="amount">500 บาท + ผลิตภัณฑ์ Unif Tea</span></div>
+
+      <a href="https://discord.gg/ntBg4qjqAC" target="_blank" rel="noopener" class="btn btn-primary btn-block" style="margin-top:20px; text-decoration:none; text-align:center; display:block;">เข้า Discord สอบถามเพิ่มเติม</a>
+    </div>
   </div>
 
   <div class="footer-note">BANGMOD WITTAYA SCHOOL // TOURNAMENT SYSTEM</div>
@@ -230,15 +304,38 @@
   function showTab(t){
     document.getElementById('tabNew').classList.toggle('hide', t!=='new');
     document.getElementById('tabManage').classList.toggle('hide', t!=='manage');
+    document.getElementById('tabRules').classList.toggle('hide', t!=='rules');
     document.getElementById('tabNewBtn').classList.toggle('active', t==='new');
     document.getElementById('tabManageBtn').classList.toggle('active', t==='manage');
+    document.getElementById('tabRulesBtn').classList.toggle('active', t==='rules');
   }
+
+  /* ------------- DEBOUNCE HELPER (ค้นหาแบบเรียลไทม์ ไม่ต้องกดปุ่มทุกครั้ง) ------------- */
+  function debounce(fn, delay){
+    let timer;
+    return function(...args){
+      clearTimeout(timer);
+      timer = setTimeout(function(){ fn.apply(null, args); }, delay);
+    };
+  }
+  const debouncedAutoLookup = debounce(function(){
+    const v = document.getElementById('studentIdInput').value.trim();
+    if(v.length >= 4) doLookup();
+  }, 500);
 
   /* ------------- REGISTRATION OPEN/CLOSED CHECK ------------- */
   apiCall('getRegistrationStatus', {}, 'GET').then(function(res){
     if(res && res.ok && res.open === false){
       document.getElementById('newTeamFlow').classList.add('hide');
       document.getElementById('closedBanner').classList.remove('hide');
+    }
+  });
+
+  /* ------------- TEAM MANAGEMENT OPEN/CLOSED CHECK ------------- */
+  apiCall('getTeamManagementStatus', {}, 'GET').then(function(res){
+    if(res && res.ok && res.open === false){
+      document.getElementById('loginPanel').classList.add('hide');
+      document.getElementById('mgmtClosedBanner').classList.remove('hide');
     }
   });
 
@@ -299,7 +396,7 @@
     const btn = document.getElementById('addBtn');
     setBtnLoading(btn, true, 'กำลังค้นหา...');
     apiCall('lookupStudent', { studentId: sid }, 'GET').then(function(res){
-      setBtnLoading(btn, false, 'แอด (ค้นหา)');
+      setBtnLoading(btn, false, 'ค้นหาสมาชิก');
       if(!res.ok){ showAlert('addAlert', res.message); return; }
       pendingStudent = res.student;
       const isLeader = members.length===0;
